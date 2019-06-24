@@ -12,7 +12,7 @@ Required parts for the project:
 |Temperature Sensor|?|N|
 |Humidity Sensor|?|N|
 |Powerbank|?|N|
-|Webcams|?|N|
+|Webcams (Nightvision would be a plus)|?|N|
 |LED Strips|?|N|
 |Speakers|?|N|
 |Microphone|?|N|
