@@ -2,20 +2,12 @@
 Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 
 This file is part of securiphant.
-
-securiphant is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-securiphant is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
+
+
+import sys
+from PyQt5.QtWidgets import QApplication
+from securiphant.qt.MainWindow import MainWindow
 
 
 def main():
@@ -23,7 +15,10 @@ def main():
 
     :return:
     """
-    # TODO implement GUI
+    app = QApplication(sys.argv)
+    form = MainWindow()
+    form.show()
+    app.exec_()
 
 
 if __name__ == "__main__":
