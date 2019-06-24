@@ -1,0 +1,8 @@
+[Unit]
+Description=securiphant-alert-bot
+
+[Service]
+ExecStart=$HOME/.local/bin/securiphant-alert-bot
+
+[Install]
+WantedBy=default.target

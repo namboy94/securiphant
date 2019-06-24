@@ -1,0 +1,41 @@
+"""LICENSE
+Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
+
+This file is part of securiphant.
+
+securiphant is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+securiphant is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
+LICENSE"""
+
+
+def main():
+    """
+    This script checks whether the NFC reader reads an authenticated NFC tag
+    If a authenticated tag is held against the sensor, the value
+
+    is_authenticated
+
+    is set to True in the shared database
+
+    :return: None
+    """
+    while True:
+        sensor_is_authenticated = False  # TODO get this using GPIO
+
+        # TODO Save values to database
+        if sensor_is_authenticated:
+            db_is_authenticated = True
+
+
+if __name__ == "__main__":
+    main()

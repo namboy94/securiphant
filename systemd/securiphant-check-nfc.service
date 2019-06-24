@@ -1,0 +1,8 @@
+[Unit]
+Description=securiphant-alert-bot
+
+[Service]
+ExecStart=$HOME/.local/bin/securiphant-check-nfc
+
+[Install]
+WantedBy=default.target
