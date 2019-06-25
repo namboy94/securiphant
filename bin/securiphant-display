@@ -12,8 +12,10 @@ from securiphant.qt.MainWindow import MainWindow
 
 def main():
     """
+    This script shows a QT GUI display that visualizes the current information
+    in the database
 
-    :return:
+    :return: None
     """
     app = QApplication(sys.argv)
     form = MainWindow()
