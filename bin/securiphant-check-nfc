@@ -5,7 +5,6 @@ This file is part of securiphant.
 LICENSE"""
 
 
-
 def main():
     """
     This script checks whether the NFC reader reads an authenticated NFC tag
@@ -17,6 +16,8 @@ def main():
 
     :return: None
     """
+    # TODO Work through this: https://pimylifeup.com/raspberry-pi-rfid-rc522/
+
     while True:
         sensor_is_authenticated = False  # TODO get this using GPIO
 

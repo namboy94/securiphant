@@ -4,6 +4,10 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+import time
+# noinspection PyPackageRequirements
+import board
+import digitalio
 
 
 def main():
@@ -19,15 +23,18 @@ def main():
 
     :return: None
     """
-    while True:
-        sensor_is_open = False  # TODO get this using GPIO
+    door_sensor = digitalio.DigitalInOut(board.D23)  # TODO Double check pin
+    door_sensor.direction = digitalio.Direction.INPUT
 
-        # TODO Save values to database
-        if sensor_is_open:
+    # TODO store values in database
+    while True:
+        if door_sensor.value:
             db_is_open = True
             db_was_open = True
         else:
             db_is_open = False
+
+        time.sleep(1)
 
 
 if __name__ == "__main__":

@@ -26,7 +26,12 @@ if __name__ == "__main__":
         packages=find_packages(),
         scripts=list(map(lambda x: os.path.join("bin", x), os.listdir("bin"))),
         install_requires=[
-            "typing", 'PyQt5'
+            "typing",
+            "PyQt5",
+            "adafruit-blinka",
+            "RPI.GPIO",
+            "spidev",
+            "mfrc522"
         ],
         test_suite='nose.collector',
         tests_require=['nose'],
