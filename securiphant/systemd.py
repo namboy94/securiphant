@@ -23,3 +23,21 @@ def is_active(service: str) -> bool:
         stdout=PIPE
     )
     return state == 0
+
+
+def start_service(service: str):
+    """
+    Starts a service if it's not already running
+    :param service: The service to start
+    :return: None
+    """
+    if not is_active(service):
+        call(
+            [
+                "systemctl", "--user",
+                "start",
+                "securiphant-{}.service".format(service)
+            ],
+            stderr=PIPE,
+            stdout=PIPE
+        )
