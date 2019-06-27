@@ -25,6 +25,7 @@ def initialize_database():
     for state_type, key, default_value in [
         (BooleanState, "user_authorized", False),
         (BooleanState, "door_open", False),
+        (BooleanState, "door_opened", False),
         (IntState, "temperature", -1),
         (IntState, "humidity", -1)
     ]:

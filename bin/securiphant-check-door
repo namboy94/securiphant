@@ -34,7 +34,7 @@ def main():
         else:
             db_is_open = False
 
-        time.sleep(1)
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

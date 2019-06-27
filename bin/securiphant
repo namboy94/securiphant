@@ -1,0 +1,25 @@
+"""LICENSE
+Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
+
+This file is part of securiphant.
+LICENSE"""
+
+import argparse
+from securiphant.systemd import start_service, stop_service
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mode", choices={"start", "stop"})
+    mode = parser.parse_args().mode
+
+    for service in [
+        "alert-bot",
+        "check-door",
+        "check-nfc",
+        "display"
+    ]:
+        if mode == "start":
+            start_service(service)
+        else:
+            stop_service(service)

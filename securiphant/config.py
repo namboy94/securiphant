@@ -9,14 +9,17 @@ import json
 from typing import Dict
 
 
+config_dir = os.path.join(os.path.expanduser("~"), ".config/securiphant")
+"""
+The directory containing all config and data files for securiphant
+"""
+
+
 def load_config() -> Dict[str, str]:
     """
     Loads the config for securiphant
     :return: The configuration data
     """
-    config_file = os.path.join(
-        os.path.expanduser("~"),
-        ".config/securiphant/config.json"
-    )
+    config_file = os.path.join(config_dir, "config.json")
     with open(config_file, "r") as f:
         return json.load(f)

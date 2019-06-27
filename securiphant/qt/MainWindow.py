@@ -201,8 +201,6 @@ class BGThread(QThread):
         Starts the refresh method
         :return: None
         """
-        session = self.gui.sessionmaker()
-
         # Used to differentiate between stuff that needs different
         # refresh times
         counter = 0
@@ -215,7 +213,7 @@ class BGThread(QThread):
             # Every 1s
             if counter % 10 == 0:
                 self.set_service_states()
-                self.set_db_values(session)
+                self.set_db_values()
 
             # Every 10 minutes
             if counter % 6000 == 0:
@@ -262,12 +260,13 @@ class BGThread(QThread):
             new_color += "border:none;"
             self.color_change.emit({"widget": widget, "color": new_color})
 
-    def set_db_values(self, session: Session):
+    def set_db_values(self):
         """
         Displays the database values on the UI
-        :param session: The database session to use
         :return: None
         """
+        session = self.gui.sessionmaker()
+
         door_open = session.query(BooleanState)\
             .filter_by(key="door_open").first().value
         user_authorized = session.query(BooleanState)\

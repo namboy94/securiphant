@@ -11,7 +11,8 @@ import json
 from shutil import copyfile
 from setuptools import setup, find_packages
 from securiphant.db.initialize import initialize_database
-from securiphant.config import load_config
+from securiphant.config import load_config, config_dir
+from securiphant.alert_bot.AlertBot import AlertBot
 
 
 if __name__ == "__main__":
@@ -39,7 +40,10 @@ if __name__ == "__main__":
             "RPI.GPIO",
             "spidev",
             "mfrc522",
-            "sqlalchemy"
+            "sqlalchemy",
+            "opencv-python",
+            "kudubot",
+            "bokkichat"
         ],
         test_suite='nose.collector',
         tests_require=['nose'],
@@ -48,9 +52,8 @@ if __name__ == "__main__":
     )
 
     if "install" in sys.argv:
-        home = os.path.expanduser("~")
-        systemd_dir = os.path.join(home, ".config/systemd/user")
-        config_dir = os.path.join(home, ".config/securiphant")
+        systemd_dir = \
+            os.path.join(os.path.expanduser("~"), ".config/systemd/user")
         config_file = os.path.join(config_dir, "config.json")
 
         if not os.path.isdir(systemd_dir):
@@ -71,7 +74,12 @@ if __name__ == "__main__":
         else:
             config_data = {}
 
-        for key in ["openweathermap_api_key", "location_city"]:
+        print("Enter config data:")
+        for key in [
+            "openweathermap_api_key",
+            "location_city",
+            "telegram_address"
+        ]:
             if key not in config_data:
                 while True:
                     _input = input("Please enter a value for {}:".format(key))
@@ -81,3 +89,13 @@ if __name__ == "__main__":
 
         with open(config_file, "w") as f:
             json.dump(config_data, f)
+
+        from bokkichat.connection.impl.TelegramBotConnection import \
+            TelegramBotConnection
+        from kudubot.exceptions import ConfigurationError
+
+        try:
+            bot = AlertBot.load(TelegramBotConnection, config_dir)
+        except ConfigurationError as e:
+            print("Set Up Alert Bot:")
+            AlertBot.create_config(TelegramBotConnection, config_dir)

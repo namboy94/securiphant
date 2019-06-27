@@ -301,10 +301,28 @@ border: none;</string>
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(0, 170, 255);</string>
+        <string notr="true">background-color: rgb(255, 170, 0);</string>
        </property>
        <property name="text">
         <string>Door Open</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="door_opened_state">
+       <property name="font">
+        <font>
+         <pointsize>18</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(0, 170, 255);</string>
+       </property>
+       <property name="text">
+        <string>Door Opened</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

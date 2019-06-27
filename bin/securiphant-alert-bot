@@ -5,13 +5,14 @@ This file is part of securiphant.
 LICENSE"""
 
 
-def main():
-    """
-
-    :return:
-    """
-    # TODO implement kudubot
+from securiphant.alert_bot.AlertBot import AlertBot
+from bokkichat.connection.impl.TelegramBotConnection import \
+    TelegramBotConnection
+from kudubot.helper import cli_bot_start
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        cli_bot_start(AlertBot, TelegramBotConnection)
+    except KeyboardInterrupt:
+        pass

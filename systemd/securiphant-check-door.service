@@ -2,7 +2,7 @@
 Description=securiphant-alert-bot
 
 [Service]
-ExecStart=$HOME/.local/bin/securiphant-check-door
+ExecStart=%h/.local/bin/securiphant-check-door
 
 [Install]
 WantedBy=default.target

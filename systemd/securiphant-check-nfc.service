@@ -2,7 +2,7 @@
 Description=securiphant-alert-bot
 
 [Service]
-ExecStart=$HOME/.local/bin/securiphant-check-nfc
+ExecStart=%h/.local/bin/securiphant-check-nfc
 
 [Install]
 WantedBy=default.target
