@@ -4,6 +4,14 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+from securiphant.crypto import verify_password
+from securiphant.nfc import read_nfc_data
+from securiphant.config import load_config
+from securiphant.db import uri
+from securiphant.db.states.BooleanState import BooleanState
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 def main():
     """
@@ -18,12 +26,21 @@ def main():
     """
     # TODO Work through this: https://pimylifeup.com/raspberry-pi-rfid-rc522/
 
-    while True:
-        sensor_is_authenticated = False  # TODO get this using GPIO
+    engine = create_engine(uri)
+    _sessionmaker = sessionmaker(bind=engine)
 
-        # TODO Save values to database
-        if sensor_is_authenticated:
-            db_is_authenticated = True
+    while True:
+
+        key = read_nfc_data()
+        _hash = load_config()["nfc_hash"]
+
+        if verify_password(key, _hash):
+            session = _sessionmaker()
+            user_authorized = session.query(BooleanState)\
+                .filter_by(key="user_authorized").first()
+
+            user_authorized.value = not user_authorized.value
+            session.commit()
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ import json
 from shutil import copyfile
 from setuptools import setup, find_packages
 from securiphant.db.initialize import initialize_database
-from securiphant.config import load_config, config_dir
+from securiphant.config import load_config, config_dir, write_config
 from securiphant.alert_bot.AlertBot import AlertBot
 
 
@@ -43,7 +43,8 @@ if __name__ == "__main__":
             "sqlalchemy",
             "opencv-python",
             "kudubot",
-            "bokkichat"
+            "bokkichat",
+            "bcrypt"
         ],
         test_suite='nose.collector',
         tests_require=['nose'],
@@ -87,8 +88,7 @@ if __name__ == "__main__":
                         break
                 config_data[key] = _input
 
-        with open(config_file, "w") as f:
-            json.dump(config_data, f)
+        write_config(config_data)
 
         from bokkichat.connection.impl.TelegramBotConnection import \
             TelegramBotConnection

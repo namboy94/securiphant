@@ -1,0 +1,28 @@
+"""LICENSE
+Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
+
+This file is part of securiphant.
+LICENSE"""
+
+from securiphant.config import load_config, write_config
+from securiphant.nfc import write_nfc_data
+from securiphant.crypto import generate_hash, generate_random
+
+
+def main():
+    """
+    This script writes a key to an NFC tag and stores the hash in the database
+    :return: None
+    """
+    config = load_config()
+
+    key = generate_random(256)
+    _hash = generate_hash(key)
+    write_nfc_data(key)
+
+    config["nfc_hash"] = _hash
+    write_config(config)
+
+
+if __name__ == "__main__":
+    main()

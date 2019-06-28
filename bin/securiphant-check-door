@@ -8,6 +8,10 @@ import time
 # noinspection PyPackageRequirements
 import board
 import digitalio
+from securiphant.db import uri
+from securiphant.db.states.BooleanState import BooleanState
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 def main():
@@ -26,15 +30,24 @@ def main():
     door_sensor = digitalio.DigitalInOut(board.D23)  # TODO Double check pin
     door_sensor.direction = digitalio.Direction.INPUT
 
-    # TODO store values in database
-    while True:
-        if door_sensor.value:
-            db_is_open = True
-            db_was_open = True
-        else:
-            db_is_open = False
+    engine = create_engine(uri)
+    _sessionmaker = sessionmaker(bind=engine)
+    session = _sessionmaker()
 
-        time.sleep(0.1)
+    while True:
+        door_open = session.query(BooleanState)\
+            .filter_by(key="door_open").first()
+        door_opened = session.query(BooleanState)\
+            .filter_by(key="door_opened").first()
+
+        if door_sensor.value:
+            door_open.value = True
+            door_opened.value = True
+        else:
+            door_open.value = False
+
+        session.commit()
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":

@@ -23,3 +23,14 @@ def load_config() -> Dict[str, str]:
     config_file = os.path.join(config_dir, "config.json")
     with open(config_file, "r") as f:
         return json.load(f)
+
+
+def write_config(data: Dict[str, str]):
+    """
+    Writes data to the config file
+    :param data: The data to write
+    :return: None
+    """
+    config_file = os.path.join(config_dir, "config.json")
+    with open(config_file, "w") as f:
+        json.dump(data, f)

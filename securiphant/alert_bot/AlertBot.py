@@ -5,6 +5,7 @@ This file is part of securiphant.
 LICENSE"""
 
 import time
+from threading import Lock
 from datetime import datetime
 from typing import List, Optional
 from bokkichat.connection.Connection import Connection
@@ -16,7 +17,7 @@ from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
 from securiphant.config import load_config
-from securiphant.db.states.BooleanState import BooleanState
+from securiphant.db.states.utils import get_boolean_state
 from securiphant.webcam import record_video
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
 
@@ -46,6 +47,8 @@ class AlertBot(Bot):
         self.owner_address = Address(
             id=-1, address=load_config()["telegram_address"]
         )
+        self.false_alarm = False
+        self.video_recording = Lock()
 
     def on_msg(self, message: Message, address: Address):
         """
@@ -58,27 +61,33 @@ class AlertBot(Bot):
         """
         db_session = self.create_db_session()
 
-        parsed = self.parse(message)
-        if parsed is None:
-            return
-        _, command, args = parsed
+        try:
+            parsed = self.parse(message)
+            if parsed is None:
+                return
+            _, command, args = parsed
 
-        if address.address != self.owner_address.address:
-            reply = message.make_reply()  # type: TextMessage
-            reply.body = "Unauthorized"
-            self.connection.send(reply)
-            return
+            if address.address != self.owner_address.address:
+                reply = message.make_reply()  # type: TextMessage
+                reply.body = "Unauthorized"
+                self.connection.send(reply)
+                return
 
-        if command == "false_alarm":
-            door_opened = self.db_session.query(BooleanState)\
-                .filter_by(key="door_opened").first()
-            door_opened.value = False
-            db_session.commit()
-        elif command == "video":
-            tempfile = "/tmp/securiphant-manual-video.mp4"
-            record_video(args["seconds"], tempfile)
-            timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
-            self.send_video(tempfile, timestamp)
+            if command == "false_alarm":
+                door_opened = get_boolean_state("door_opened", db_session)
+                door_opened.value = False
+                self.false_alarm = True
+                db_session.commit()
+                self.notify("False Alarm confirmed.")
+
+            elif command == "video":
+                tempfile = "/tmp/securiphant-manual-video.mp4"
+                self.record_video(args["seconds"], tempfile)
+                timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
+                self.send_video(tempfile, timestamp)
+
+        finally:
+            self.sessionmaker.remove()
 
     @classmethod
     def name(cls) -> str:
@@ -125,6 +134,18 @@ class AlertBot(Bot):
         )
         self.connection.send(media)
 
+    def record_video(self, duration: int, destination: str):
+        """
+        Records video from the connected camera and stores the video in a file
+        while making sure that only one thread can record at a time.
+        :param duration: The duration of the clip to record
+        :param destination: The destination path of the video file
+        :return: None
+        """
+        self.video_recording.acquire()
+        record_video(duration, destination)
+        self.video_recording.release()
+
     def run_in_bg(self):
         """
         The logic of the background thread monitoring the database values
@@ -136,24 +157,29 @@ class AlertBot(Bot):
         while True:
             time.sleep(1)
 
+            if self.false_alarm:
+                waiting_for_authorization = False
+
             db_session = self.create_db_session()
-            door_opened = db_session.query(BooleanState)\
-                .filter_by(key="door_opened").first()
-            user_authorized = db_session.query(BooleanState)\
-                .filter_by(key="user_authorized").first()
+            door_opened = get_boolean_state("door_opened", db_session)
+            user_authorized = get_boolean_state("user_authorized", db_session)
+
             print(door_opened.value)
             print(user_authorized.value)
 
-            if not door_opened.value:
-                continue
+            if door_opened.value:
 
-            else:
                 if user_authorized.value:
                     door_opened.value = False
                     db_session.commit()
+                    waiting_for_authorization = False
+
                 elif waiting_for_authorization:
                     self.send_video(tempfile, "A break-in has been detected!")
-                    record_video(30, tempfile)
+                    self.record_video(30, tempfile)
+
                 else:
                     waiting_for_authorization = True
-                    record_video(15, tempfile)
+                    self.record_video(15, tempfile)
+
+            self.sessionmaker.remove()

@@ -269,6 +269,8 @@ class BGThread(QThread):
 
         door_open = session.query(BooleanState)\
             .filter_by(key="door_open").first().value
+        door_opened = session.query(BooleanState) \
+            .filter_by(key="door_opened").first().value
         user_authorized = session.query(BooleanState)\
             .filter_by(key="user_authorized").first().value
         temperature = session.query(IntState) \
@@ -276,12 +278,17 @@ class BGThread(QThread):
         humidity = session.query(IntState) \
             .filter_by(key="humidity").first().value
 
-        door_open_color = self.BLUE_BG if door_open else self.ORANGE_BG
+        door_open_color = self.ORANGE_BG if door_open else self.BLUE_BG
+        door_opened_color = self.ORANGE_BG if door_opened else self.BLUE_BG
         user_auth_color = self.BLUE_BG if user_authorized else self.ORANGE_BG
 
         self.color_change.emit({
             "widget": self.gui.door_open_state,
             "color": door_open_color
+        })
+        self.color_change.emit({
+            "widget": self.gui.door_opened_state,
+            "color": door_opened_color
         })
         self.color_change.emit({
             "widget": self.gui.user_authorized_state,
