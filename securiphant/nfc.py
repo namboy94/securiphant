@@ -4,6 +4,7 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 
 
@@ -13,8 +14,12 @@ def write_nfc_data(data: str):
     :param data: The data to write
     :return: None
     """
-    writer = SimpleMFRC522()
-    writer.write(data)
+    try:
+        writer = SimpleMFRC522()
+        writer.write(data)
+    finally:
+        # noinspection PyUnresolvedReferences
+        GPIO.cleanup()
 
 
 def read_nfc_data() -> str:
@@ -22,6 +27,10 @@ def read_nfc_data() -> str:
     Reads an NFC tag's content
     :return: The data on the NFC tag
     """
-    reader = SimpleMFRC522()
-    _, text = reader.read()
-    return text
+    try:
+        reader = SimpleMFRC522()
+        _, text = reader.read()
+        return text
+    finally:
+        # noinspection PyUnresolvedReferences
+        GPIO.cleanup()

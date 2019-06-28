@@ -18,7 +18,10 @@ def main():
 
     key = generate_random(256)
     _hash = generate_hash(key)
+
+    print("Hold the NFC tag to the sensor now")
     write_nfc_data(key)
+    print("NFC Tag written successfully")
 
     config["nfc_hash"] = _hash
     write_config(config)

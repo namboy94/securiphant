@@ -159,6 +159,7 @@ class AlertBot(Bot):
 
             if self.false_alarm:
                 waiting_for_authorization = False
+                self.false_alarm = False
 
             db_session = self.create_db_session()
             door_opened = get_boolean_state("door_opened", db_session)

@@ -1,1 +1,3 @@
-from threading import Thread
+from securiphant.nfc import read_nfc_data
+
+print(read_nfc_data())

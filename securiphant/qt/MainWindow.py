@@ -33,7 +33,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         super().__init__(None)
         self.setupUi(self)
-        # self.showFullScreen()  # TODO activate
+        self.showFullScreen()
 
         self.display_state.clicked.connect(
             lambda _: start_service("display")

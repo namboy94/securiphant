@@ -4,10 +4,11 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-import cv2
-import time
+import os
+from subprocess import call, PIPE
 
 
+# noinspection PyUnusedLocal
 def record_video(
         seconds: int,
         target_file: str,
@@ -24,6 +25,28 @@ def record_video(
     :param mirror: Whether or not to mirror the image
     :return: None
     """
+    h264_path = target_file + ".h264"
+    call(
+        [
+            "raspivid",
+            "-o", h264_path,
+            "-t", str(seconds * 1000),
+            "-rot", "90",
+            "-n"
+        ],
+        stdout=PIPE, stderr=PIPE
+    )
+    call(
+        [
+            "MP4Box", "-add", h264_path, target_file
+        ],
+        stdout=PIPE,
+        stderr=PIPE
+    )
+    os.remove(h264_path)
+    # TODO Either replace opencv code or get it to run on raspi
+    """
+    # import cv2
     start = time.time()
 
     camera = cv2.VideoCapture(camera_id)
@@ -47,3 +70,4 @@ def record_video(
     camera.release()
     writer.release()
     cv2.destroyAllWindows()
+    """

@@ -4,11 +4,13 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+import time
 from securiphant.crypto import verify_password
 from securiphant.nfc import read_nfc_data
 from securiphant.config import load_config
 from securiphant.db import uri
 from securiphant.db.states.BooleanState import BooleanState
+from securiphant.speech.generating import speak
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -39,6 +41,11 @@ def main():
 
             user_authorized.value = not user_authorized.value
             session.commit()
+
+            if user_authorized.value:
+                speak("Welcome Home!")
+
+        time.sleep(3)
 
 
 if __name__ == "__main__":

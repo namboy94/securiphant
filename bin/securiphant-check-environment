@@ -34,6 +34,9 @@ def main():
 
         session.commit()
         time.sleep(2)
+        print(temperature)
+        print(humidity)
+        print("---")
 
 
 if __name__ == "__main__":
