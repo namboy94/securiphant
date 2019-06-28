@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-alert-bot
+Description=securiphant-check-nfc
 
 [Service]
 ExecStart=%h/.local/bin/securiphant-check-nfc

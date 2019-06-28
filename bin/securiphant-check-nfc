@@ -24,8 +24,6 @@ def main():
 
     :return: None
     """
-    # TODO Work through this: https://pimylifeup.com/raspberry-pi-rfid-rc522/
-
     engine = create_engine(uri)
     _sessionmaker = sessionmaker(bind=engine)
 

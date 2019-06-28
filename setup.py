@@ -7,7 +7,6 @@ LICENSE"""
 
 import os
 import sys
-import json
 from shutil import copyfile
 from setuptools import setup, find_packages
 from securiphant.db.initialize import initialize_database
@@ -44,7 +43,8 @@ if __name__ == "__main__":
             "opencv-python",
             "kudubot",
             "bokkichat",
-            "bcrypt"
+            "bcrypt",
+            "Adafruit_DHT"
         ],
         test_suite='nose.collector',
         tests_require=['nose'],
@@ -99,3 +99,6 @@ if __name__ == "__main__":
         except ConfigurationError as e:
             print("Set Up Alert Bot:")
             AlertBot.create_config(TelegramBotConnection, config_dir)
+
+        print("If you have not done so already, "
+              "run 'securiphant-initialize-nfc' to initialize the NFC tag")

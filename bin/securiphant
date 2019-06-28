@@ -17,6 +17,7 @@ if __name__ == "__main__":
         "alert-bot",
         "check-door",
         "check-nfc",
+        "check-environment",
         "display"
     ]:
         if mode == "start":

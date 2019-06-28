@@ -19,7 +19,6 @@ from securiphant.db.states.IntState import IntState
 from securiphant.db.states.BooleanState import BooleanState
 from securiphant.weather import get_weather
 from sqlalchemy import create_engine
-from sqlalchemy.orm.session import Session
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 
@@ -44,6 +43,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.check_nfc_state.clicked.connect(
             lambda _: start_service("check_nfc")
+        )
+        self.check_environment_state.clicked.connect(
+            lambda _: start_service("check_environment")
         )
         self.alert_bot_state.clicked.connect(
             lambda _: start_service("alert_bot")
@@ -90,76 +92,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: None
         """
         data["widget"].display(data["value"])
-
-    def refresh(self):
-        """
-        Periodically refreshes the UI
-        :return: None
-        """
-        session = self.sessionmaker()
-        while True:
-            self.set_time()
-            self.set_service_states()
-            self.set_db_values(session)
-            time.sleep(1)
-
-    def set_time(self):
-        """
-        Sets the time of day on the UI
-        :return: None
-        """
-        now = datetime.now()
-        self.hour_display.display(str(now.hour).zfill(2))
-        self.minute_display.display(str(now.minute).zfill(2))
-        self.second_display.display(str(now.second).zfill(2))
-        self.date_display.setText(now.strftime("%Y-%m-%d"))
-
-    def set_service_states(self):
-        """
-        Displays the states of securiphant systemd services on the UI
-        :return: None
-        """
-        for service, widget in [
-            ("alert-bot", self.alert_bot_state),
-            ("check-door", self.check_door_state),
-            ("check-nfc", self.check_nfc_state),
-            ("display", self.display_state)
-        ]:
-            status = is_active(service)
-
-            if status:
-                widget.setStyleSheet(self.GREEN_BG)
-            else:
-                widget.setStyleSheet(self.RED_BG)
-
-    def set_db_values(self, session: Session):
-        """
-        Displays the database values on the UI
-        :param session: The database session to use
-        :return: None
-        """
-        door_open = session.query(BooleanState)\
-            .filter_by(key="door_open").first().value
-        user_authorized = session.query(BooleanState)\
-            .filter_by(key="user_authorized").first().value
-        temperature = session.query(IntState) \
-            .filter_by(key="temperature").first().value
-        humidity = session.query(IntState) \
-            .filter_by(key="humidity").first().value
-
-        if door_open:
-            self.door_open_state.setStyleSheet(self.BLUE_BG)
-        else:
-            self.door_open_state.setStyleSheet(self.ORANGE_BG)
-
-        if user_authorized:
-            self.user_authorized_state.setStyleSheet(self.BLUE_BG)
-        else:
-            self.user_authorized_state.setStyleSheet(self.ORANGE_BG)
-
-        self.temperature_display.setText(str(temperature))
-        self.humidity_display.setText(str(humidity))
-        print(temperature)
 
 
 # noinspection PyUnresolvedReferences
@@ -253,6 +185,7 @@ class BGThread(QThread):
             ("alert-bot", self.gui.alert_bot_state),
             ("check-door", self.gui.check_door_state),
             ("check-nfc", self.gui.check_nfc_state),
+            ("check-environment", self.gui.check_environment_state),
             ("display", self.gui.display_state)
         ]:
             status = is_active(service)

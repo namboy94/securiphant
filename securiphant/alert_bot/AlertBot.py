@@ -164,9 +164,6 @@ class AlertBot(Bot):
             door_opened = get_boolean_state("door_opened", db_session)
             user_authorized = get_boolean_state("user_authorized", db_session)
 
-            print(door_opened.value)
-            print(user_authorized.value)
-
             if door_opened.value:
 
                 if user_authorized.value:

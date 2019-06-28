@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-alert-bot
+Description=securiphant-display
 
 [Service]
 ExecStart=%h/.local/bin/securiphant-display

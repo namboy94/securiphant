@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-alert-bot
+Description=securiphant-check-door
 
 [Service]
 ExecStart=%h/.local/bin/securiphant-check-door

@@ -1,0 +1,8 @@
+[Unit]
+Description=securiphant-check-environment
+
+[Service]
+ExecStart=%h/.local/bin/securiphant-check-environment
+
+[Install]
+WantedBy=default.target
