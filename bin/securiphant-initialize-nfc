@@ -7,6 +7,7 @@ LICENSE"""
 from securiphant.config import load_config, write_config
 from securiphant.nfc import write_nfc_data
 from securiphant.crypto import generate_hash, generate_random
+from securiphant.speech.generating import speak
 
 
 def main():
@@ -16,12 +17,12 @@ def main():
     """
     config = load_config()
 
-    key = generate_random(256)
+    key = generate_random(48)  # Maximum capacity of NFC tag
     _hash = generate_hash(key)
 
-    print("Hold the NFC tag to the sensor now")
+    speak("Hold the NFC tag to the sensor now")
     write_nfc_data(key)
-    print("NFC Tag written successfully")
+    speak("NFC Tag written successfully")
 
     config["nfc_hash"] = _hash
     write_config(config)

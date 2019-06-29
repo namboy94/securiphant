@@ -315,6 +315,12 @@ class Ui_MainWindow(object):
         self.weather_description.setStyleSheet("background-color: rgb(0, 255, 255);")
         self.weather_description.setAlignment(QtCore.Qt.AlignCenter)
         self.weather_description.setObjectName("weather_description")
+        self.tux = QtWidgets.QLabel(self.centralwidget)
+        self.tux.setGeometry(QtCore.QRect(480, 220, 121, 151))
+        self.tux.setText("")
+        self.tux.setPixmap(QtGui.QPixmap("../../../Downloads/Tux.png"))
+        self.tux.setScaledContents(True)
+        self.tux.setObjectName("tux")
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)

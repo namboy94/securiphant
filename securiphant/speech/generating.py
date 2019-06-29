@@ -4,6 +4,8 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+from subprocess import call, PIPE
+
 
 def speak(text: str):
     """
@@ -11,4 +13,4 @@ def speak(text: str):
     :param text: The text to speak
     :return: None
     """
-    pass
+    call(["espeak", text], stderr=PIPE, stdout=PIPE)

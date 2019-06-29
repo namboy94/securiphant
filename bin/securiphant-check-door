@@ -43,7 +43,6 @@ def main():
 
         session.commit()
         time.sleep(0.5)
-        print(door_open.value)
 
 
 if __name__ == "__main__":

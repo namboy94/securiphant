@@ -66,6 +66,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.refresh_thread.start()
 
+        # Tux!
+        icon_data = urlopen(
+            "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png"
+        ).read()
+        icon_image = QImage()
+        icon_image.loadFromData(icon_data)
+        self.tux.setPixmap(QPixmap(icon_image))
+
     @staticmethod
     def change_color(data: Dict[str, str or QWidget]):
         """

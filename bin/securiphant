@@ -5,7 +5,8 @@ This file is part of securiphant.
 LICENSE"""
 
 import argparse
-from securiphant.systemd import start_service, stop_service
+from securiphant.systemd import start_service, stop_service, \
+    securiphant_services
 
 if __name__ == "__main__":
 
@@ -13,13 +14,7 @@ if __name__ == "__main__":
     parser.add_argument("mode", choices={"start", "stop"})
     mode = parser.parse_args().mode
 
-    for service in [
-        "alert-bot",
-        "check-door",
-        "check-nfc",
-        "check-environment",
-        "display"
-    ]:
+    for service in securiphant_services:
         if mode == "start":
             start_service(service)
         else:

@@ -5,9 +5,10 @@ This file is part of securiphant.
 LICENSE"""
 
 import time
-from threading import Lock
+from threading import Lock, Thread
 from datetime import datetime
 from typing import List, Optional
+from sqlalchemy.orm import Session
 from bokkichat.connection.Connection import Connection
 from bokkichat.entities.message.Message import Message
 from bokkichat.entities.message.TextMessage import TextMessage
@@ -17,9 +18,11 @@ from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
 from securiphant.config import load_config
-from securiphant.db.states.utils import get_boolean_state
-from securiphant.webcam import record_video
+from securiphant.db.states.utils import get_boolean_state, get_int_state
+from securiphant.webcam import record_raspicam, record_opencv
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
+from securiphant.systemd import securiphant_services, is_active
+from securiphant.weather import get_weather
 
 
 class AlertBot(Bot):
@@ -81,10 +84,19 @@ class AlertBot(Bot):
                 self.notify("False Alarm confirmed.")
 
             elif command == "video":
-                tempfile = "/tmp/securiphant-manual-video.mp4"
-                self.record_video(args["seconds"], tempfile)
+                tempfile_base = "/tmp/securiphant-manual-video"
+
+                if args["seconds"] > 45:
+                    self.notify("Maximum video length is currently 45 seconds."
+                                " Trimming video to 45 seconds.")
+                    args["seconds"] = 45
+
+                self.record_videos(args["seconds"], tempfile_base)
                 timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
-                self.send_video(tempfile, timestamp)
+                self.send_videos(tempfile_base, timestamp)
+
+            elif command == "status":
+                self.send_status(db_session)
 
         finally:
             self.sessionmaker.remove()
@@ -116,35 +128,98 @@ class AlertBot(Bot):
         )
         self.connection.send(message)
 
-    def send_video(self, video_file: str, caption: str):
+    def send_videos(self, file_base: str, caption: str):
         """
-        Sends a video file to the owner
-        :param video_file: The video file to send
+        Sends videos from the security cameras to the owner
+        :param file_base: The base of the file to use. Same as in record_videos
         :param caption: The caption to attach
         :return: None
         """
-        with open(video_file, "rb") as f:
-            data = f.read()
-        media = MediaMessage(
-            self.connection.address,
-            self.owner_address,
-            MediaType.VIDEO,
-            data,
-            caption
-        )
-        self.connection.send(media)
+        raspi_file = file_base + "-raspicam.mp4"
+        webcam_file = file_base + "-webcam.avi"
 
-    def record_video(self, duration: int, destination: str):
+        for recording in [webcam_file, raspi_file]:
+
+            specific_caption = caption
+            if recording == raspi_file:
+                specific_caption += "\n(Raspberry Pi Camera)"
+            elif recording == webcam_file:
+                specific_caption += "\n(IR Webcam)"
+
+            with open(recording, "rb") as f:
+                data = f.read()
+            media = MediaMessage(
+                self.connection.address,
+                self.owner_address,
+                MediaType.VIDEO,
+                data,
+                specific_caption
+            )
+            self.connection.send(media)
+
+    def record_videos(self, duration: int, file_base: str):
         """
-        Records video from the connected camera and stores the video in a file
-        while making sure that only one thread can record at a time.
+        Records video using the connected USB webcam as well as the
+        integrated raspberry pi camera, then stores these videos in files.
         :param duration: The duration of the clip to record
-        :param destination: The destination path of the video file
+        :param file_base: The base path of the file. Two files will be created,
+                          starting with the base, followed by an identifier
+                          for the camera and the file extension.
+                          Example: base-raspicam.mp4
         :return: None
         """
         self.video_recording.acquire()
-        record_video(duration, destination)
+
+        raspi_dest = file_base + "-raspicam.mp4"
+        webcam_dest = file_base + "-webcam.avi"
+
+        raspi_thread = Thread(
+            target=lambda: record_raspicam(duration, raspi_dest)
+        )
+        webcam_thread = Thread(
+            target=lambda: record_opencv(duration, webcam_dest, _format="MJPG")
+        )
+        raspi_thread.start()
+        webcam_thread.start()
+
+        raspi_thread.join()
+        webcam_thread.join()
+
         self.video_recording.release()
+
+    def send_status(self, session: Session):
+        """
+        Sends the owner a status message
+        :param session: The database session to use
+        :return: None
+        """
+        timestamp = datetime.now().strftime("%Y-%m-%d:%H-%M-%S")
+
+        message = "Securiphant Status ({})\n\n".format(timestamp)
+        message += "Services:\n"
+
+        for service in securiphant_services:
+            message += service + ("✅" if is_active(service) else "❌") + "\n"
+
+        message += "\nEnvironment:\n"
+
+        in_temp = get_int_state("temperature", session).value
+        in_humidity = get_int_state("humidity", session).value
+
+        weather_data = get_weather(load_config()["location_city"])
+        message += "Inside Temperature: {}°C\nInside Humidity: {}%\n"\
+            .format(in_temp, in_humidity)
+        message += "Outside Temperature: {}°C\nOutside Humidity: {}%\n"\
+            .format(weather_data["temperature"], weather_data["humidity"])
+        message += "Weather: {}\n\n".format(weather_data["weather_type"])
+
+        message += "Sensor Data:\n"
+        for key in ["door_open", "door_opened", "user_authorized"]:
+            state = get_boolean_state(key, session).value
+            message += key + ": " + ("✅" if state else "❌") + "\n"
+
+        message = message.strip().replace("_", "\\_")
+        self.notify(message)
 
     def run_in_bg(self):
         """
@@ -152,7 +227,7 @@ class AlertBot(Bot):
         :return: None
         """
         waiting_for_authorization = False
-        tempfile = "/tmp/securiphant-recording.mp4"
+        tempfile_base = "/tmp/securiphant-recording"
 
         while True:
             time.sleep(1)
@@ -167,17 +242,19 @@ class AlertBot(Bot):
 
             if door_opened.value:
 
-                if user_authorized.value:
+                if user_authorized.value:  # Authorization disables alarm
                     door_opened.value = False
                     db_session.commit()
                     waiting_for_authorization = False
 
-                elif waiting_for_authorization:
-                    self.send_video(tempfile, "A break-in has been detected!")
-                    self.record_video(30, tempfile)
+                elif waiting_for_authorization:  # Break-in confirmed
+                    self.send_videos(
+                        tempfile_base, "A break-in has been detected!"
+                    )
+                    self.record_videos(30, tempfile_base)
 
-                else:
+                else:  # Start timer and start recording
                     waiting_for_authorization = True
-                    self.record_video(15, tempfile)
+                    self.record_videos(15, tempfile_base)
 
             self.sessionmaker.remove()

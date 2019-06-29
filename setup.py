@@ -91,7 +91,6 @@ if __name__ == "__main__":
         install_requires=[
             "typing",
             "requests",
-            "adafruit-blinka",
             "RPI.GPIO",
             "spidev",
             "mfrc522",
@@ -100,6 +99,7 @@ if __name__ == "__main__":
             "bokkichat",
             "bcrypt",
             "Adafruit_DHT",
+            # "opencv-python",
             # "PyQt5"
         ],
         test_suite='nose.collector',

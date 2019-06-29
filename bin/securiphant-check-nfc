@@ -44,6 +44,8 @@ def main():
 
             if user_authorized.value:
                 speak("Welcome Home!")
+            else:
+                speak("Goodbye.")
 
         time.sleep(3)
 

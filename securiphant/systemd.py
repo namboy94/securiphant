@@ -7,6 +7,18 @@ LICENSE"""
 from subprocess import call, PIPE
 
 
+securiphant_services = [
+    "alert-bot",
+    "check-door",
+    "check-nfc",
+    "check-environment",
+    "display"
+]
+"""
+A list of securiphant systemd services
+"""
+
+
 def is_active(service: str) -> bool:
     """
     Checks whether or not a systemd securiphant service is active or not

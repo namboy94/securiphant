@@ -28,5 +28,6 @@ class AlertBotParser(CommandParser):
         """
         return [
             Command("false_alarm", []),
-            Command("video", [("seconds", int)])
+            Command("video", [("seconds", int)]),
+            Command("status", [])
         ]
