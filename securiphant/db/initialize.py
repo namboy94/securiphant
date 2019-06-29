@@ -26,6 +26,7 @@ def initialize_database():
         (BooleanState, "user_authorized", False),
         (BooleanState, "door_open", False),
         (BooleanState, "door_opened", False),
+        (BooleanState, "going_out", False),
         (IntState, "temperature", -1),
         (IntState, "humidity", -1)
     ]:

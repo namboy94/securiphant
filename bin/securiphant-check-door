@@ -41,6 +41,8 @@ def main():
         else:
             door_open.value = False
 
+        print("Open" if door_open.value else "Closed")
+
         session.commit()
         time.sleep(0.5)
 

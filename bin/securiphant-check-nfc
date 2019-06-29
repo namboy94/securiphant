@@ -9,7 +9,7 @@ from securiphant.crypto import verify_password
 from securiphant.nfc import read_nfc_data
 from securiphant.config import load_config
 from securiphant.db import uri
-from securiphant.db.states.BooleanState import BooleanState
+from securiphant.db.states.utils import get_boolean_state
 from securiphant.speech.generating import speak
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -36,8 +36,7 @@ def main():
 
         if verify_password(key, _hash):
             session = _sessionmaker()
-            user_authorized = session.query(BooleanState)\
-                .filter_by(key="user_authorized").first()
+            user_authorized = get_boolean_state("user_authorized", session)
 
             user_authorized.value = not user_authorized.value
             session.commit()
@@ -45,7 +44,17 @@ def main():
             if user_authorized.value:
                 speak("Welcome Home!")
             else:
+                going_out = get_boolean_state("going_out", session)
+                door_opened = get_boolean_state("door_opened", session)
+
+                going_out.value = True
+                session.commit()
                 speak("Goodbye.")
+                time.sleep(10)  # Give user time to leave
+
+                going_out.value = False
+                door_opened.value = False
+                session.commit()
 
         time.sleep(3)
 

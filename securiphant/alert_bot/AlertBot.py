@@ -98,6 +98,11 @@ class AlertBot(Bot):
             elif command == "status":
                 self.send_status(db_session)
 
+            elif command == "arm":
+                authorized = get_boolean_state("user_authorized", db_session)
+                authorized.value = False
+                db_session.commit()
+
         finally:
             self.sessionmaker.remove()
 
@@ -239,6 +244,11 @@ class AlertBot(Bot):
             db_session = self.create_db_session()
             door_opened = get_boolean_state("door_opened", db_session)
             user_authorized = get_boolean_state("user_authorized", db_session)
+            going_out = get_boolean_state("going_out", db_session)
+
+            if going_out.value:
+                self.sessionmaker.remove()
+                continue
 
             if door_opened.value:
 

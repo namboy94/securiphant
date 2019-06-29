@@ -378,7 +378,29 @@ border: none;</string>
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QLabel" name="going_out_state">
+       <property name="font">
+        <font>
+         <pointsize>18</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 170, 0);</string>
+       </property>
+       <property name="text">
+        <string>Going Out</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
     </layout>
+    <zorder>door_open_state</zorder>
+    <zorder>door_opened_state</zorder>
+    <zorder>going_out_state</zorder>
+    <zorder>user_authorized_state</zorder>
    </widget>
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
@@ -681,6 +703,14 @@ border: none;</string>
      <bool>true</bool>
     </property>
    </widget>
+   <zorder>weather_description</zorder>
+   <zorder>verticalLayoutWidget</zorder>
+   <zorder>horizontalLayoutWidget</zorder>
+   <zorder>date_display</zorder>
+   <zorder>horizontalLayoutWidget_2</zorder>
+   <zorder>verticalLayoutWidget_2</zorder>
+   <zorder>weather_icon</zorder>
+   <zorder>tux</zorder>
   </widget>
  </widget>
  <resources/>

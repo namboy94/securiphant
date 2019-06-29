@@ -8,15 +8,17 @@ import time
 from typing import Dict
 from urllib.request import urlopen
 from datetime import datetime
+# noinspection PyPackageRequirements
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLCDNumber, QLabel
+# noinspection PyPackageRequirements
 from PyQt5.QtCore import QThread, pyqtSignal
+# noinspection PyPackageRequirements
 from PyQt5.QtGui import QPixmap, QImage
 from securiphant.qt.generated.main import Ui_MainWindow
 from securiphant.systemd import is_active, start_service
 from securiphant.config import load_config
 from securiphant.db import uri
-from securiphant.db.states.IntState import IntState
-from securiphant.db.states.BooleanState import BooleanState
+from securiphant.db.states.utils import get_boolean_state, get_int_state
 from securiphant.weather import get_weather
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -208,19 +210,16 @@ class BGThread(QThread):
         """
         session = self.gui.sessionmaker()
 
-        door_open = session.query(BooleanState)\
-            .filter_by(key="door_open").first().value
-        door_opened = session.query(BooleanState) \
-            .filter_by(key="door_opened").first().value
-        user_authorized = session.query(BooleanState)\
-            .filter_by(key="user_authorized").first().value
-        temperature = session.query(IntState) \
-            .filter_by(key="temperature").first().value
-        humidity = session.query(IntState) \
-            .filter_by(key="humidity").first().value
+        door_open = get_boolean_state("door_open", session).value
+        door_opened = get_boolean_state("door_opened", session).value
+        user_authorized = get_boolean_state("user_authorized", session).value
+        going_out = get_boolean_state("going_out", session).value
+        temperature = get_int_state("temperature", session).value
+        humidity = get_int_state("humidity", session).value
 
-        door_open_color = self.ORANGE_BG if door_open else self.BLUE_BG
-        door_opened_color = self.ORANGE_BG if door_opened else self.BLUE_BG
+        door_open_color = self.BLUE_BG if door_open else self.ORANGE_BG
+        door_opened_color = self.BLUE_BG if door_opened else self.ORANGE_BG
+        going_out_color = self.BLUE_BG if going_out else self.ORANGE_BG
         user_auth_color = self.BLUE_BG if user_authorized else self.ORANGE_BG
 
         self.color_change.emit({
@@ -230,6 +229,10 @@ class BGThread(QThread):
         self.color_change.emit({
             "widget": self.gui.door_opened_state,
             "color": door_opened_color
+        })
+        self.color_change.emit({
+            "widget": self.gui.going_out_state,
+            "color": going_out_color
         })
         self.color_change.emit({
             "widget": self.gui.user_authorized_state,
