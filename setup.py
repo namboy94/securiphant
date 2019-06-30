@@ -94,6 +94,7 @@ if __name__ == "__main__":
             "RPI.GPIO",
             "spidev",
             "mfrc522",
+            "pi-rc522",
             "sqlalchemy",
             "kudubot",
             "bokkichat",

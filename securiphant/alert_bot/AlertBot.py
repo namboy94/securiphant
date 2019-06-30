@@ -219,7 +219,12 @@ class AlertBot(Bot):
         message += "Weather: {}\n\n".format(weather_data["weather_type"])
 
         message += "Sensor Data:\n"
-        for key in ["door_open", "door_opened", "user_authorized"]:
+        for key in [
+            "door_open",
+            "door_opened",
+            "going_out",
+            "user_authorized"
+        ]:
             state = get_boolean_state(key, session).value
             message += key + ": " + ("✅" if state else "❌") + "\n"
 
