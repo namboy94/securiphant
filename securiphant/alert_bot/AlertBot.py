@@ -24,6 +24,7 @@ from securiphant.utils.camera import record_raspicam_video, \
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
 from securiphant.utils.systemd import securiphant_services, is_active
 from securiphant.utils.weather import get_weather
+from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
 
 
 class AlertBot(Bot):
@@ -109,6 +110,16 @@ class AlertBot(Bot):
                 authorized = get_boolean_state("user_authorized", db_session)
                 authorized.value = False
                 db_session.commit()
+                self.notify("System has been armed")
+
+            elif command == "door_open_events":
+                count = args["count"]
+                events = db_session.query(DoorOpenEvent)\
+                    .order_by("id").limit(count)
+                message = "Door Opened:\n\n"
+                for event in events:
+                    message += str(event)
+                self.notify(message)
 
         finally:
             self.sessionmaker.remove()

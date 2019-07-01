@@ -31,5 +31,6 @@ class AlertBotParser(CommandParser):
             Command("video", [("seconds", int)]),
             Command("photo", []),
             Command("status", []),
-            Command("arm", [])
+            Command("arm", []),
+            Command("door_open_events", [("count", int)])
         ]

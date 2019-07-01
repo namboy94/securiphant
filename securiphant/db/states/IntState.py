@@ -28,3 +28,9 @@ class IntState(Base):
     """
     The int value itself
     """
+
+    def __str__(self) -> str:
+        """
+        :return: The string representation of the state
+        """
+        return str(self.value)

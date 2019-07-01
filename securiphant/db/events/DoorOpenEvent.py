@@ -6,6 +6,7 @@ LICENSE"""
 
 from securiphant.db import Base
 from sqlalchemy import Column, Boolean, Integer
+from datetime import datetime
 
 
 class DoorOpenEvent(Base):
@@ -37,3 +38,15 @@ class DoorOpenEvent(Base):
     """
     Whether or not the user was authorized while the door was opened
     """
+
+    def __str__(self) -> str:
+        """
+        :return: The string representation of the event
+        """
+        date = datetime.fromtimestamp(self.timestamp)\
+            .strftime("%Y-%m-%d:%H-%M-%S")
+        return "{}: {}s, {}authorized".format(
+            date,
+            self.duration,
+            "" if self.was_authorized else "not "
+        )
