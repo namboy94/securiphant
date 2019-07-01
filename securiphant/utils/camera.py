@@ -4,13 +4,14 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-import os
+# noinspection PyPackageRequirements
 import cv2
+import os
 import time
 from subprocess import call, PIPE
 
 
-def record_raspicam(seconds: int, target_file: str):
+def record_raspicam_video(seconds: int, target_file: str):
     """
     Records a video using raspicam
     :param seconds: The time in seconds to record
@@ -35,6 +36,7 @@ def record_raspicam(seconds: int, target_file: str):
         ],
         stdout=PIPE, stderr=PIPE
     )
+    # Box into MP4 file
     call(
         [
             "MP4Box", "-add", h264_path, target_file
@@ -46,7 +48,7 @@ def record_raspicam(seconds: int, target_file: str):
 
 
 # noinspection PyUnusedLocal
-def record_opencv(
+def record_webcam_video(
         seconds: int,
         target_file: str,
         camera_id: int = 0,
@@ -88,3 +90,25 @@ def record_opencv(
 
     camera.release()
     writer.release()
+
+
+def take_raspicam_photo(target_file: str):
+    """
+    Takes a photo using the attached raspberry pi camera
+    :param target_file: The path to the file in which to store the photo
+    :return: None
+    """
+    call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
+
+
+def take_webcam_photo(target_file: str, camera_id: int = 0):
+    """
+    Takes a photo using a webcam
+    :param target_file: The path to the file in which to store the photo
+    :param camera_id: Which camera to use. Defaults to 0
+    :return: None
+    """
+    camera = cv2.VideoCapture(camera_id)
+    _, frame = camera.read()
+    cv2.imwrite(target_file, frame)
+    camera.release()

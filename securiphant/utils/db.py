@@ -5,8 +5,13 @@ This file is part of securiphant.
 LICENSE"""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from securiphant.db import Base, uri
+
+
+# noinspection PyUnresolvedReferences
+from securiphant.db.states.BooleanState import BooleanState
+from securiphant.db.states.IntState import IntState
 
 
 # noinspection PyUnresolvedReferences
@@ -38,3 +43,23 @@ def initialize_database():
             session.add(state_type(key=key, value=default_value))
 
     session.commit()
+
+
+def get_int_state(key: str, session: Session) -> IntState:
+    """
+    Retrieves an int state from the database
+    :param key: The key of the state entry
+    :param session: The session to use for querying
+    :return: The IntState object
+    """
+    return session.query(IntState).filter_by(key=key).first()
+
+
+def get_boolean_state(key: str, session: Session) -> BooleanState:
+    """
+    Retrieves a boolean state from the database
+    :param key: The key of the state entry
+    :param session: The session to use for querying
+    :return: The BooleanState object
+    """
+    return session.query(BooleanState).filter_by(key=key).first()

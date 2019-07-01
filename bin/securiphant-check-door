@@ -6,7 +6,7 @@ LICENSE"""
 
 import time
 from securiphant.db import uri
-from securiphant.db.states.utils import get_boolean_state
+from securiphant.utils.db import get_boolean_state
 from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

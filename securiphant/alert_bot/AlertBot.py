@@ -18,8 +18,9 @@ from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
 from securiphant.utils.config import load_config
-from securiphant.db.states.utils import get_boolean_state, get_int_state
-from securiphant.utils.webcam import record_raspicam, record_opencv
+from securiphant.utils.db import get_int_state, get_boolean_state
+from securiphant.utils.camera import record_raspicam_video, \
+    record_webcam_video, take_raspicam_photo, take_webcam_photo
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
 from securiphant.utils.systemd import securiphant_services, is_active
 from securiphant.utils.weather import get_weather
@@ -51,7 +52,7 @@ class AlertBot(Bot):
             id=-1, address=load_config()["telegram_address"]
         )
         self.false_alarm = False
-        self.video_recording = Lock()
+        self.camera_access = Lock()
 
     def on_msg(self, message: Message, address: Address):
         """
@@ -140,10 +141,10 @@ class AlertBot(Bot):
         :param caption: The caption to attach
         :return: None
         """
-        raspi_file = file_base + "-raspicam.mp4"
         webcam_file = file_base + "-webcam.avi"
+        raspi_file = file_base + "-raspicam.mp4"
 
-        for recording in [webcam_file, raspi_file]:
+        for recording in [raspi_file, webcam_file]:
 
             specific_caption = caption
             if recording == raspi_file:
@@ -173,16 +174,18 @@ class AlertBot(Bot):
                           Example: base-raspicam.mp4
         :return: None
         """
-        self.video_recording.acquire()
+        self.camera_access.acquire()
 
         raspi_dest = file_base + "-raspicam.mp4"
         webcam_dest = file_base + "-webcam.avi"
 
         raspi_thread = Thread(
-            target=lambda: record_raspicam(duration, raspi_dest)
+            target=lambda: record_raspicam_video(duration, raspi_dest)
         )
         webcam_thread = Thread(
-            target=lambda: record_opencv(duration, webcam_dest, _format="MJPG")
+            target=lambda: record_webcam_video(
+                duration, webcam_dest, _format="MJPG"
+            )
         )
         raspi_thread.start()
         webcam_thread.start()
@@ -190,7 +193,57 @@ class AlertBot(Bot):
         raspi_thread.join()
         webcam_thread.join()
 
-        self.video_recording.release()
+        self.camera_access.release()
+
+    def send_photos(self, file_base: str, caption: str):
+        """
+        Sends the photos previously taken by take_photos()
+        :param file_base: The filename base to user
+        :param caption: The caption to use
+        :return: None
+        """
+        webcam_file = file_base + "-webcam.jpg"
+        raspi_file = file_base + "-raspicam.jpg"
+
+        for photo in [raspi_file, webcam_file]:
+
+            specific_caption = caption
+            if photo == raspi_file:
+                specific_caption += "\n(Raspberry Pi Camera)"
+            elif photo == webcam_file:
+                specific_caption += "\n(IR Webcam)"
+
+            with open(photo, "rb") as f:
+                data = f.read()
+            media = MediaMessage(
+                self.connection.address,
+                self.owner_address,
+                MediaType.IMAGE,
+                data,
+                specific_caption
+            )
+            self.connection.send(media)
+
+    def take_photos(self, file_base: str):
+        """
+        Takes a photo from every available camera angle
+        :param file_base: the filename base to use
+        :return: None
+        """
+
+        self.camera_access.acquire()
+
+        raspi_dest = file_base + "-raspicam.jpg"
+        webcam_dest = file_base + "-webcam.jpg"
+
+        raspi_thread = Thread(target=lambda: take_raspicam_photo(raspi_dest))
+        webcam_thread = Thread(target=lambda: take_webcam_photo(webcam_dest))
+        raspi_thread.start()
+        webcam_thread.start()
+        raspi_thread.join()
+        webcam_thread.join()
+
+        self.camera_access.release()
 
     def send_status(self, session: Session):
         """
@@ -266,11 +319,13 @@ class AlertBot(Bot):
                     self.send_videos(
                         tempfile_base, "A break-in has been detected!"
                     )
-                    self.record_videos(30, tempfile_base)
+                    self.record_videos(10, tempfile_base)
 
                 else:  # Start timer and start recording
                     waiting_for_authorization = True
+                    self.take_photos(tempfile_base)
                     self.notify("Door has been opened")
-                    self.record_videos(15, tempfile_base)
+                    self.send_photos(tempfile_base, "Photo")
+                    self.record_videos(10, tempfile_base)
 
             self.sessionmaker.remove()

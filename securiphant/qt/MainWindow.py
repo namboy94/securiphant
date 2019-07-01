@@ -18,7 +18,7 @@ from securiphant.qt.generated.main import Ui_MainWindow
 from securiphant.utils.systemd import is_active, start_service
 from securiphant.utils.config import load_config
 from securiphant.db import uri
-from securiphant.db.states.utils import get_boolean_state, get_int_state
+from securiphant.utils.db import get_int_state, get_boolean_state
 from securiphant.utils.weather import get_weather
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
