@@ -17,7 +17,7 @@ def post_install():
     :return: None
     """
     from securiphant.db.initialize import initialize_database
-    from securiphant.config import load_config, config_dir, write_config
+    from securiphant.utils.config import load_config, config_dir, write_config
     from securiphant.alert_bot.AlertBot import AlertBot
 
     systemd_dir = \

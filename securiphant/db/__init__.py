@@ -6,7 +6,7 @@ LICENSE"""
 
 import os
 from sqlalchemy.ext.declarative import declarative_base
-from securiphant.config import config_dir
+from securiphant.utils.config import config_dir
 
 
 Base = declarative_base()

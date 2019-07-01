@@ -17,12 +17,12 @@ from kudubot.Bot import Bot
 from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
-from securiphant.config import load_config
+from securiphant.utils.config import load_config
 from securiphant.db.states.utils import get_boolean_state, get_int_state
-from securiphant.webcam import record_raspicam, record_opencv
+from securiphant.utils.webcam import record_raspicam, record_opencv
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
-from securiphant.systemd import securiphant_services, is_active
-from securiphant.weather import get_weather
+from securiphant.utils.systemd import securiphant_services, is_active
+from securiphant.utils.weather import get_weather
 
 
 class AlertBot(Bot):
@@ -270,6 +270,7 @@ class AlertBot(Bot):
 
                 else:  # Start timer and start recording
                     waiting_for_authorization = True
+                    self.notify("Door has been opened")
                     self.record_videos(15, tempfile_base)
 
             self.sessionmaker.remove()

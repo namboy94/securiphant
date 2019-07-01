@@ -5,7 +5,7 @@ This file is part of securiphant.
 LICENSE"""
 
 import argparse
-from securiphant.systemd import start_service, stop_service, \
+from securiphant.utils.systemd import start_service, stop_service, \
     securiphant_services
 
 if __name__ == "__main__":

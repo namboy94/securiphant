@@ -7,7 +7,7 @@ LICENSE"""
 import json
 import requests
 from typing import Dict
-from securiphant.config import load_config
+from securiphant.utils.config import load_config
 
 
 def get_weather(city: str) -> Dict[str, str]:

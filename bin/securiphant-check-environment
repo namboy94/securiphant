@@ -5,7 +5,7 @@ This file is part of securiphant.
 LICENSE"""
 
 import time
-from securiphant.environment import get_environment_data
+from securiphant.utils.environment import get_environment_data
 from securiphant.db import uri
 from securiphant.db.states.utils import get_int_state
 from sqlalchemy import create_engine

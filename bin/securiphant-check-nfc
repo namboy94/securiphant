@@ -5,12 +5,12 @@ This file is part of securiphant.
 LICENSE"""
 
 import time
-from securiphant.crypto import verify_password
-from securiphant.nfc import read_nfc_data
-from securiphant.config import load_config
+from securiphant.utils.crypto import verify_password
+from securiphant.utils.nfc import read_nfc_data
+from securiphant.utils.config import load_config
 from securiphant.db import uri
 from securiphant.db.states.utils import get_boolean_state
-from securiphant.speech.generating import speak
+from securiphant.utils.speech import speak
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

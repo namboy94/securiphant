@@ -4,10 +4,10 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-from securiphant.config import load_config, write_config
-from securiphant.nfc import write_nfc_data
-from securiphant.crypto import generate_hash, generate_random
-from securiphant.speech.generating import speak
+from securiphant.utils.config import load_config, write_config
+from securiphant.utils.nfc import write_nfc_data
+from securiphant.utils.crypto import generate_hash, generate_random
+from securiphant.utils.speech import speak
 
 
 def main():
