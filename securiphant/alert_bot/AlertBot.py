@@ -96,6 +96,12 @@ class AlertBot(Bot):
                 timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
                 self.send_videos(tempfile_base, timestamp)
 
+            elif command == "photo":
+                tempfile_base = "/tmp/securiphant-manual-photo"
+                self.take_photos(tempfile_base)
+                timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
+                self.send_photos(tempfile_base, timestamp)
+
             elif command == "status":
                 self.send_status(db_session)
 
