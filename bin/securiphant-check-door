@@ -6,7 +6,8 @@ LICENSE"""
 
 import time
 from securiphant.db import uri
-from securiphant.db.states.BooleanState import BooleanState
+from securiphant.db.states.utils import get_boolean_state
+from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from securiphant.utils.door import is_open
@@ -27,21 +28,35 @@ def main():
     """
     engine = create_engine(uri)
     _sessionmaker = sessionmaker(bind=engine)
-    session = _sessionmaker()
+
+    open_start = None
 
     while True:
-        door_open = session.query(BooleanState)\
-            .filter_by(key="door_open").first()
-        door_opened = session.query(BooleanState)\
-            .filter_by(key="door_opened").first()
+
+        session = _sessionmaker()
+
+        door_open = get_boolean_state("door_open", session)
+        door_opened = get_boolean_state("door_opened", session)
 
         if is_open():
             door_open.value = True
             door_opened.value = True
+
+            if open_start is None:
+                open_start = time.time()
+
         else:
             door_open.value = False
 
-        print("Open" if door_open.value else "Closed")
+            if open_start is not None:
+                was_authorized = \
+                    get_boolean_state("user_authorized", session).value
+                session.add(DoorOpenEvent(
+                    timestamp=int(time.time()),
+                    duration=int(time.time() - open_start),
+                    was_authorized=was_authorized
+                ))
+                open_start = None
 
         session.commit()
         time.sleep(0.5)

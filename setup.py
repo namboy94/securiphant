@@ -16,7 +16,7 @@ def post_install():
     Post Installation Script
     :return: None
     """
-    from securiphant.db.initialize import initialize_database
+    from securiphant.utils.db import initialize_database
     from securiphant.utils.config import load_config, config_dir, write_config
     from securiphant.alert_bot.AlertBot import AlertBot
 

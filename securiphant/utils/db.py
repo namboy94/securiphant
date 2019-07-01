@@ -7,16 +7,19 @@ LICENSE"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from securiphant.db import Base, uri
-from securiphant.db.states.BooleanState import BooleanState
-from securiphant.db.states.IntState import IntState
 
 
+# noinspection PyUnresolvedReferences
 def initialize_database():
     """
     Initializes the database, creating all tables and filling default
     key-value pairs.
     :return: The database session
     """
+    from securiphant.db.states.BooleanState import BooleanState
+    from securiphant.db.states.IntState import IntState
+    from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
+
     db_engine = create_engine(uri)
     Base.metadata.create_all(db_engine, checkfirst=True)
     _sessionmaker = sessionmaker(bind=db_engine)
