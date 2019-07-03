@@ -8,7 +8,30 @@ LICENSE"""
 import cv2
 import os
 import time
+from typing import List, Dict, Optional
 from subprocess import call, PIPE
+from threading import Thread, Lock
+
+
+raspicam_lock = Lock()
+"""
+A lock for the raspberry pi camera
+"""
+
+webcam_locks = {}
+"""
+A list of locks for the webcams
+"""
+
+
+format_exts = {
+    "MJPG": "avi",
+    "X264": "x264",
+    "mp4v": "mp4"
+}
+"""
+Maps extensions to file extensions
+"""
 
 
 def record_raspicam_video(seconds: int, target_file: str):
@@ -24,6 +47,7 @@ def record_raspicam_video(seconds: int, target_file: str):
         if os.path.isfile(path):
             os.remove(path)
 
+    raspicam_lock.acquire()
     call(
         [
             "raspivid",
@@ -36,6 +60,7 @@ def record_raspicam_video(seconds: int, target_file: str):
         ],
         stdout=PIPE, stderr=PIPE
     )
+    raspicam_lock.release()
     # Box into MP4 file
     call(
         [
@@ -47,29 +72,43 @@ def record_raspicam_video(seconds: int, target_file: str):
     os.remove(h264_path)
 
 
+def take_raspicam_photo(target_file: str):
+    """
+    Takes a photo using the attached raspberry pi camera
+    :param target_file: The path to the file in which to store the photo
+    :return: None
+    """
+    raspicam_lock.acquire()
+    call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
+    raspicam_lock.release()
+
+
 # noinspection PyUnusedLocal
 def record_webcam_video(
         seconds: int,
         target_file: str,
         camera_id: int = 0,
-        fps: int = 30,
-        mirror: bool = True,
-        _format: str = "mp4v"
+        _format: str = "MJPG"
 ):
     """
     Records video using a connected USB webcam using opencv
     :param seconds: The amount of seconds to record
     :param target_file: The path of the file to write to
     :param camera_id: Which camera to use. Defaults to 0
-    :param fps: The amount of frames per second to record
-    :param mirror: Whether or not to mirror the image
-    :param _format: The format to use. Default to mp4v, but stuff like XVID,
-                   MJPG or X264 can also be used. Just make sure the system is
+    :param _format: The format to use. Default to MJPG, but stuff like XVID,
+                   mp4v or X264 can also be used. Just make sure the system is
                    correctly configured for these codecs.
     :return: None
     """
-    start = time.time()
+    if camera_id not in webcam_locks:
+        webcam_locks[camera_id] = Lock()
+    lock = webcam_locks[camera_id]
+    lock.acquire()
 
+    mirror = False
+    fps = 20
+
+    start = time.time()
     camera = cv2.VideoCapture(camera_id)
 
     width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -90,15 +129,7 @@ def record_webcam_video(
 
     camera.release()
     writer.release()
-
-
-def take_raspicam_photo(target_file: str):
-    """
-    Takes a photo using the attached raspberry pi camera
-    :param target_file: The path to the file in which to store the photo
-    :return: None
-    """
-    call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
+    lock.release()
 
 
 def take_webcam_photo(target_file: str, camera_id: int = 0):
@@ -108,7 +139,112 @@ def take_webcam_photo(target_file: str, camera_id: int = 0):
     :param camera_id: Which camera to use. Defaults to 0
     :return: None
     """
+    if camera_id not in webcam_locks:
+        webcam_locks[camera_id] = Lock()
+    lock = webcam_locks[camera_id]
+    lock.acquire()
+
     camera = cv2.VideoCapture(camera_id)
     _, frame = camera.read()
     cv2.imwrite(target_file, frame)
     camera.release()
+    lock.release()
+
+
+def record_videos(
+        target_file_base: str,
+        duration: int,
+        webcam_ids: Optional[List[int]] = None,
+        webcam_format: str = "MJPG"
+) -> Dict[str, str]:
+    """
+    Records video on multiple cameras at once
+    :param target_file_base: The base of the target file. Will be appended
+                             relevant information at the end.
+                             Example: video-0.mp4 for webcam 0
+    :param duration: The duration of the recording
+    :param webcam_ids: The ids of the webcams to use. Defaults to [0]
+    :param webcam_format: The format to use for webcams
+    :return: The paths to the image files
+    """
+    if webcam_ids is None:
+        webcam_ids = [0]
+    webcam_target_base = \
+        target_file_base + "-webcam{}." + format_exts[webcam_format]
+
+    target_files = {
+        "raspi": target_file_base + "-raspi.mp4"
+    }
+
+    raspi_thread = Thread(
+        target=lambda: record_raspicam_video(duration, target_files["raspi"])
+    )
+    webcam_threads = []
+    for webcam_id in webcam_ids:
+
+        target_file = webcam_target_base.format(webcam_id)
+        target_files["webcam" + str(webcam_id)] = target_file
+
+        webcam_thread = Thread(
+            target=lambda: record_webcam_video(
+                duration,
+                target_file,
+                webcam_id,
+                webcam_format
+            )
+        )
+        webcam_threads.append(webcam_thread)
+
+    _run_threads([raspi_thread] + webcam_threads)
+
+    return target_files
+
+
+def take_photos(
+        target_file_base: str,
+        webcam_ids: Optional[List[int]] = None,
+) -> Dict[str, str]:
+    """
+    Takes a photo using multiple cameras
+    :param target_file_base: The target file base
+    :param webcam_ids: The webcam IDs to use
+    :return: The paths to the generated image files
+    """
+
+    if webcam_ids is None:
+        webcam_ids = [0]
+    webcam_target_base = \
+        target_file_base + "-webcam{}.png"
+
+    target_files = {
+        "raspi": target_file_base + "-raspi.png"
+    }
+
+    raspi_thread = Thread(
+        target=lambda: take_raspicam_photo(target_files["raspi"])
+    )
+
+    webcam_threads = []
+    for webcam_id in webcam_ids:
+        target_file = webcam_target_base.format(webcam_id)
+        target_files["webcam" + str(webcam_id)] = target_file
+
+        webcam_thread = Thread(
+            target=lambda: take_webcam_photo(target_file, webcam_id)
+        )
+        webcam_threads.append(webcam_thread)
+
+    _run_threads([raspi_thread] + webcam_threads)
+    return target_files
+
+
+def _run_threads(threads: List[Thread]):
+    """
+    Runs a list of threads and waits until they're done
+    :param threads: The threads to run
+    :return: None
+    """
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()

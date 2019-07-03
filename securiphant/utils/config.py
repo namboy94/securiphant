@@ -6,7 +6,7 @@ LICENSE"""
 
 import os
 import json
-from typing import Dict
+from typing import Dict, Any
 
 
 config_dir = os.path.join(os.path.expanduser("~"), ".config/securiphant")
@@ -15,7 +15,7 @@ The directory containing all config and data files for securiphant
 """
 
 
-def load_config() -> Dict[str, str]:
+def load_config() -> Dict[str, Any]:
     """
     Loads the config for securiphant
     :return: The configuration data
@@ -25,7 +25,7 @@ def load_config() -> Dict[str, str]:
         return json.load(f)
 
 
-def write_config(data: Dict[str, str]):
+def write_config(data: Dict[str, Any]):
     """
     Writes data to the config file
     :param data: The data to write

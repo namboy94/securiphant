@@ -78,15 +78,26 @@ be better due to including a lot more codecs during the preparatory phase.
 After both of those have been installed, you can simply run
 ```python3 setup.py install``` to install securiphant.
 
-After the installation, you will be prompted for some
-configuration information. For more information on what the indiviudal
-configuration parameters mean, check the "Configuration" section
+## Post-Installation Configuration
+
+After the installation, you'll have to take care of some configuration:
 
 To initialize the RFID tag, run ```securiphant-nfc-initialize```
-after installation.
+after installation, then hold the RFID tag to use to the RFID reader.
 
 To initialize the weather configuration, run
 ```securiphant-weather-initialize```.
+
+To initialize the telegram sending functionality,
+first run ```securiphant-alert-bot --initialize``` and enter your API
+key. At the end, a key wil be output onto the command line. Take note of this
+key, as you'll have to use it to register your telegram address with the
+bot.
+Afterwards, start the bot using ```securiphant-alert-bot``` and send it
+the message ```/start```. Then send it the key you received in the previous
+step using ```/init <KEY>```. Once initialized, the bot won't react to any
+other telegram users but this one. To reset this key, run
+```securiphant-alert-bot --initialize``` once more.
 
 # Running the application
 

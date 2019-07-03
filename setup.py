@@ -17,12 +17,10 @@ def post_install():
     :return: None
     """
     from securiphant.utils.db import initialize_database
-    from securiphant.utils.config import load_config, config_dir, write_config
-    from securiphant.alert_bot.AlertBot import AlertBot
+    from securiphant.utils.config import config_dir
 
     systemd_dir = \
         os.path.join(os.path.expanduser("~"), ".config/systemd/user")
-    config_file = os.path.join(config_dir, "config.json")
 
     if not os.path.isdir(systemd_dir):
         os.makedirs(systemd_dir)
@@ -37,38 +35,10 @@ def post_install():
 
     initialize_database()
 
-    if os.path.isfile(config_file):
-        config_data = load_config()
-    else:
-        config_data = {}
-
-    print("Enter config data:")
-    for key in [
-        "openweathermap_api_key",
-        "location_city",
-        "telegram_address"
-    ]:
-        if key not in config_data:
-            while True:
-                _input = input("Please enter a value for {}:".format(key))
-                if _input != "":
-                    break
-            config_data[key] = _input
-
-    write_config(config_data)
-
-    from bokkichat.connection.impl.TelegramBotConnection import \
-        TelegramBotConnection
-    from kudubot.exceptions import ConfigurationError
-
-    try:
-        bot = AlertBot.load(TelegramBotConnection, config_dir)
-    except ConfigurationError as e:
-        print("Set Up Alert Bot:")
-        AlertBot.create_config(TelegramBotConnection, config_dir)
-
-    print("If you have not done so already, "
-          "run 'securiphant-initialize-nfc' to initialize the NFC tag")
+    print("To finish configuring securiphant, run the following commands:")
+    print("securiphant-nfc-initialize")
+    print("securiphant-weather-initialize")
+    print("securiphant-alert-bot --initialize")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ This file is part of securiphant.
 LICENSE"""
 
 import time
-from threading import Lock, Thread
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session
@@ -17,10 +16,9 @@ from kudubot.Bot import Bot
 from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
+from securiphant.utils.camera import take_photos, record_videos
 from securiphant.utils.config import load_config
 from securiphant.utils.db import get_int_state, get_boolean_state
-from securiphant.utils.camera import record_raspicam_video, \
-    record_webcam_video, take_raspicam_photo, take_webcam_photo
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
 from securiphant.utils.systemd import securiphant_services, is_active
 from securiphant.utils.weather import get_weather
@@ -49,11 +47,14 @@ class AlertBot(Bot):
                   securiphant sqlite database
         """
         super().__init__(connection, location, uri)
-        self.owner_address = Address(
-            id=-1, address=load_config()["telegram_address"]
-        )
+
+        owner_address = load_config()["alert_bot_user_address"]
+        if owner_address is None:
+            self.owner_address = None
+        else:
+            self.owner_address = Address(id=-1, address=owner_address)
+
         self.false_alarm = False
-        self.camera_access = Lock()
 
     def on_msg(self, message: Message, address: Address):
         """
@@ -64,6 +65,10 @@ class AlertBot(Bot):
         :param address: The address of the message's sender
         :return: None
         """
+        if not message.is_text():
+            return
+        message = message  # type: TextMessage
+
         db_session = self.create_db_session()
 
         try:
@@ -72,8 +77,23 @@ class AlertBot(Bot):
                 return
             _, command, args = parsed
 
+            if command == "init":
+                if self.owner_address is not None:
+                    self.notify("Already initialized")
+                else:
+                    config = load_config()
+                    key = config["alert_bot_key"]
+                    if key == args["key"]:
+                        config["alert_bot_user_address"] = address.address
+                        self.owner_address = address
+                        self.notify("Initialized successfully")
+                    else:
+                        resp = message.make_reply(body="Invalid key")
+                        self.connection.send(resp)
+                return
+
             if address.address != self.owner_address.address:
-                reply = message.make_reply()  # type: TextMessage
+                reply = message.make_reply()
                 reply.body = "Unauthorized"
                 self.connection.send(reply)
                 return
@@ -86,22 +106,19 @@ class AlertBot(Bot):
                 self.notify("False Alarm confirmed.")
 
             elif command == "video":
+                if args["seconds"] > 15:
+                    self.notify("Maximum video length is currently 15 seconds."
+                                " Trimming video to 15 seconds.")
+                    args["seconds"] = 15
+
                 tempfile_base = "/tmp/securiphant-manual-video"
-
-                if args["seconds"] > 45:
-                    self.notify("Maximum video length is currently 45 seconds."
-                                " Trimming video to 45 seconds.")
-                    args["seconds"] = 45
-
-                self.record_videos(args["seconds"], tempfile_base)
-                timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
-                self.send_videos(tempfile_base, timestamp)
+                for _, path in record_videos(tempfile_base, args["seconds"]):
+                    self.send_video(path)
 
             elif command == "photo":
                 tempfile_base = "/tmp/securiphant-manual-photo"
-                self.take_photos(tempfile_base)
-                timestamp = datetime.now().strftime("```%Y-%m-%d:%H-%M-%S```")
-                self.send_photos(tempfile_base, timestamp)
+                for _, path in take_photos(tempfile_base):
+                    self.send_image(path)
 
             elif command == "status":
                 self.send_status(db_session)
@@ -151,116 +168,35 @@ class AlertBot(Bot):
         )
         self.connection.send(message)
 
-    def send_videos(self, file_base: str, caption: str):
+    def send_image(self, path: str):
         """
-        Sends videos from the security cameras to the owner
-        :param file_base: The base of the file to use. Same as in record_videos
-        :param caption: The caption to attach
+        Sends an image to the owner
+        :param path: The path to the image file
         :return: None
         """
-        webcam_file = file_base + "-webcam.avi"
-        raspi_file = file_base + "-raspicam.mp4"
+        with open(path, "rb") as f:
+            data = f.read()
+        self.connection.send(MediaMessage(
+            self.connection.address,
+            self.owner_address,
+            MediaType.IMAGE,
+            data
+        ))
 
-        for recording in [raspi_file, webcam_file]:
-
-            specific_caption = caption
-            if recording == raspi_file:
-                specific_caption += "\n(Raspberry Pi Camera)"
-            elif recording == webcam_file:
-                specific_caption += "\n(IR Webcam)"
-
-            with open(recording, "rb") as f:
-                data = f.read()
-            media = MediaMessage(
-                self.connection.address,
-                self.owner_address,
-                MediaType.VIDEO,
-                data,
-                specific_caption
-            )
-            self.connection.send(media)
-
-    def record_videos(self, duration: int, file_base: str):
+    def send_video(self, path: str):
         """
-        Records video using the connected USB webcam as well as the
-        integrated raspberry pi camera, then stores these videos in files.
-        :param duration: The duration of the clip to record
-        :param file_base: The base path of the file. Two files will be created,
-                          starting with the base, followed by an identifier
-                          for the camera and the file extension.
-                          Example: base-raspicam.mp4
+        Sends a video to the owner
+        :param path: The path to the image file
         :return: None
         """
-        self.camera_access.acquire()
-
-        raspi_dest = file_base + "-raspicam.mp4"
-        webcam_dest = file_base + "-webcam.avi"
-
-        raspi_thread = Thread(
-            target=lambda: record_raspicam_video(duration, raspi_dest)
-        )
-        webcam_thread = Thread(
-            target=lambda: record_webcam_video(
-                duration, webcam_dest, _format="MJPG"
-            )
-        )
-        raspi_thread.start()
-        webcam_thread.start()
-
-        raspi_thread.join()
-        webcam_thread.join()
-
-        self.camera_access.release()
-
-    def send_photos(self, file_base: str, caption: str):
-        """
-        Sends the photos previously taken by take_photos()
-        :param file_base: The filename base to user
-        :param caption: The caption to use
-        :return: None
-        """
-        webcam_file = file_base + "-webcam.jpg"
-        raspi_file = file_base + "-raspicam.jpg"
-
-        for photo in [raspi_file, webcam_file]:
-
-            specific_caption = caption
-            if photo == raspi_file:
-                specific_caption += "\n(Raspberry Pi Camera)"
-            elif photo == webcam_file:
-                specific_caption += "\n(IR Webcam)"
-
-            with open(photo, "rb") as f:
-                data = f.read()
-            media = MediaMessage(
-                self.connection.address,
-                self.owner_address,
-                MediaType.IMAGE,
-                data,
-                specific_caption
-            )
-            self.connection.send(media)
-
-    def take_photos(self, file_base: str):
-        """
-        Takes a photo from every available camera angle
-        :param file_base: the filename base to use
-        :return: None
-        """
-
-        self.camera_access.acquire()
-
-        raspi_dest = file_base + "-raspicam.jpg"
-        webcam_dest = file_base + "-webcam.jpg"
-
-        raspi_thread = Thread(target=lambda: take_raspicam_photo(raspi_dest))
-        webcam_thread = Thread(target=lambda: take_webcam_photo(webcam_dest))
-        raspi_thread.start()
-        webcam_thread.start()
-        raspi_thread.join()
-        webcam_thread.join()
-
-        self.camera_access.release()
+        with open(path, "rb") as f:
+            data = f.read()
+        self.connection.send(MediaMessage(
+            self.connection.address,
+            self.owner_address,
+            MediaType.VIDEO,
+            data
+        ))
 
     def send_status(self, session: Session):
         """
@@ -308,6 +244,7 @@ class AlertBot(Bot):
         """
         waiting_for_authorization = False
         tempfile_base = "/tmp/securiphant-recording"
+        recorded_videos = None
 
         while True:
             time.sleep(1)
@@ -333,16 +270,17 @@ class AlertBot(Bot):
                     waiting_for_authorization = False
 
                 elif waiting_for_authorization:  # Break-in confirmed
-                    self.send_videos(
-                        tempfile_base, "A break-in has been detected!"
-                    )
-                    self.record_videos(10, tempfile_base)
+                    self.notify("A break-in has been detected!")
+                    for _, path in recorded_videos:
+                        self.send_video(path)
+                    recorded_videos = record_videos(tempfile_base, 10, [0])
 
                 else:  # Start timer and start recording
                     waiting_for_authorization = True
-                    self.take_photos(tempfile_base)
                     self.notify("Door has been opened")
-                    self.send_photos(tempfile_base, "Photo")
-                    self.record_videos(10, tempfile_base)
+                    for _, path in take_photos(tempfile_base):
+                        self.send_image(path)
+
+                    recorded_videos = record_videos(tempfile_base, 10, [0])
 
             self.sessionmaker.remove()
