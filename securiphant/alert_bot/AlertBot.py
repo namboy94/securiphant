@@ -48,10 +48,13 @@ class AlertBot(Bot):
         """
         super().__init__(connection, location, uri)
 
+        self.logger.debug("Looking for owner address")
         owner_address = load_config()["alert_bot_user_address"]
         if owner_address is None:
+            self.logger.debug("Owner address not found!")
             self.owner_address = None
         else:
+            self.logger.debug("Owner address found!")
             self.owner_address = Address(id=-1, address=owner_address)
 
         self.false_alarm = False
@@ -79,7 +82,8 @@ class AlertBot(Bot):
             self._handle_init(message, sender, args["key"])
             return
 
-        if sender.address != self.owner_address.address:
+        if self.owner_address is None or \
+                sender.address != self.owner_address.address:
             reply = message.make_reply()
             reply.body = "Unauthorized"
             self.connection.send(reply)
@@ -111,6 +115,7 @@ class AlertBot(Bot):
             time.sleep(1)
 
             if self.false_alarm:
+                self.logger.debug("Resetting alarm after false alarm")
                 waiting_for_authorization = False
                 self.false_alarm = False
 
@@ -120,28 +125,36 @@ class AlertBot(Bot):
             going_out = get_boolean_state("going_out", db_session)
 
             if going_out.value:
+                self.logger.debug("User is going out right now")
                 self.sessionmaker.remove()
                 continue
 
             if door_opened.value:
 
                 if user_authorized.value:  # Authorization disables alarm
+                    self.logger.info("User authorized")
                     door_opened.value = False
                     db_session.commit()
                     waiting_for_authorization = False
 
                 elif waiting_for_authorization:  # Break-in confirmed
+                    self.logger.warning("Break-In was detected")
                     self.notify("A break-in has been detected!")
-                    for _, path in recorded_videos:
+
+                    self.logger.debug("Sending video of would-be burglar")
+                    for _, path in recorded_videos.items():
                         self._send_video(path)
+
+                    self.logger.debug("Recording additional video")
                     recorded_videos = record_videos(tempfile_base, 10, [0])
 
                 else:  # Start timer and start recording
+                    self.logger.warning("Door has been opened and "
+                                        "not authorized yet.")
                     waiting_for_authorization = True
                     self.notify("Door has been opened")
-                    for _, path in take_photos(tempfile_base):
-                        self._send_image(path)
 
+                    self.logger.debug("Recording video of would-be burglar")
                     recorded_videos = record_videos(tempfile_base, 10, [0])
 
             self.sessionmaker.remove()
@@ -198,16 +211,25 @@ class AlertBot(Bot):
         :return: None
         """
         if self.owner_address is not None:
-            self.notify("Already initialized")
+            resp = message.make_reply(body="Already initialized")
+            self.connection.send(resp)
 
         else:
+
+            self.logger.info("Attempting Initialization")
+
             config = load_config()
             stored_key = config["alert_bot_key"]
+
             if key == stored_key:
+                self.logger.info("Initialization Successful")
                 config["alert_bot_user_address"] = sender.address
+                write_config(config)
                 self.owner_address = sender
                 self.notify("Initialized successfully")
+
             else:
+                self.logger.info("Initialization Unsuccessful")
                 resp = message.make_reply(body="Invalid key")
                 self.connection.send(resp)
 
@@ -255,12 +277,15 @@ class AlertBot(Bot):
         for service in securiphant_services:
             message += service + ("✅" if is_active(service) else "❌") + "\n"
 
+        is_alive = ("✅" if self.bg_thread.is_alive() else "❌")
+        message += "Background Thread: " + is_alive + "\n"
+
         message += "\nEnvironment:\n"
 
         in_temp = get_int_state("temperature", session).value
         in_humidity = get_int_state("humidity", session).value
 
-        weather_data = get_weather(load_config()["location_city"])
+        weather_data = get_weather()
         message += "Inside Temperature: {}°C\nInside Humidity: {}%\n"\
             .format(in_temp, in_humidity)
         message += "Outside Temperature: {}°C\nOutside Humidity: {}%\n"\
@@ -304,7 +329,7 @@ class AlertBot(Bot):
             duration = 15
 
         tempfile_base = "/tmp/securiphant-manual-video"
-        for _, path in record_videos(tempfile_base, duration):
+        for _, path in record_videos(tempfile_base, duration).items():
             self._send_video(path)
 
     def _handle_photo(self):
@@ -313,7 +338,7 @@ class AlertBot(Bot):
         :return: None
         """
         tempfile_base = "/tmp/securiphant-manual-photo"
-        for _, path in take_photos(tempfile_base):
+        for _, path in take_photos(tempfile_base).items():
             self._send_image(path)
 
     def _handle_arm(self, db_session: Session):

@@ -254,7 +254,7 @@ class BGThread(QThread):
         :return: None
         """
         # TODO make sure that failing to get weather data doesn't crash the GUI
-        weather_data = get_weather(self.gui.config["location_city"])
+        weather_data = get_weather()
         self.text_change.emit({
             "widget": self.gui.outside_temp_display,
             "text": weather_data["temperature"]

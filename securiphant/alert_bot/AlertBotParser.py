@@ -27,10 +27,11 @@ class AlertBotParser(CommandParser):
         :return: The enabled commands for this bot
         """
         return [
-            Command("false_alarm", []),
-            Command("video", [("seconds", int)]),
-            Command("photo", []),
+            Command("init", [("key", str)]),
             Command("status", []),
+            Command("photo", []),
+            Command("video", [("seconds", int)]),
+            Command("door_open_events", [("count", int)]),
             Command("arm", []),
-            Command("door_open_events", [("count", int)])
+            Command("false_alarm", []),
         ]

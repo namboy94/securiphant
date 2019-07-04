@@ -17,7 +17,7 @@ def post_install():
     :return: None
     """
     from securiphant.utils.db import initialize_database
-    from securiphant.utils.config import config_dir
+    from securiphant.utils.config import config_dir, write_config
     from securiphant.utils.systemd import reload_daemon
 
     systemd_dir = \
@@ -27,6 +27,7 @@ def post_install():
         os.makedirs(systemd_dir)
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)
+        write_config({})
 
     initialize_database()
 
@@ -42,7 +43,7 @@ def post_install():
     print("systemd\nraspistill\nraspivid\nMP4Box\nespeak")
     print("To finish configuring securiphant, run the following commands:")
     print("securiphant-nfc-initialize")
-    print("securiphant-weather-initialize")
+    print("securiphant-weather-initialize <API_KEY> <LOCATION>")
     print("securiphant-alert-bot --initialize")
 
 

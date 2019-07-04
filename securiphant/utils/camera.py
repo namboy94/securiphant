@@ -143,7 +143,12 @@ def take_webcam_photo(target_file: str, camera_id: int = 0):
 
     with lock:
         camera = cv2.VideoCapture(camera_id)
+
+        start = time.time()
         _, frame = camera.read()
+        while time.time() - start < 2:  # Warming Up...
+            _, frame = camera.read()
+
         cv2.imwrite(target_file, frame)
         camera.release()
 
