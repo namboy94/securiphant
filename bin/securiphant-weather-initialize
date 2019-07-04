@@ -4,7 +4,7 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-from securiphant.utils.config import load_config, write_config
+from securiphant.utils.config import initialize_weather_config
 
 
 def main():
@@ -13,19 +13,7 @@ def main():
     display.
     :return: None
     """
-    config = load_config()
-
-    for key, desc in [
-        ("openweathermap_api_key", "The API Key for openweathermap.org"),
-        ("location_city", "The city for which to display weather data")
-    ]:
-        while True:
-            response= input(desc + ":")
-            if response != "":
-                config[key] = response
-                break
-
-    write_config(config)
+    initialize_weather_config()
 
 
 if __name__ == "__main__":

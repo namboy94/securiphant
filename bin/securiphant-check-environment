@@ -4,12 +4,7 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-import time
-from securiphant.utils.environment import get_environment_data
-from securiphant.db import uri
-from securiphant.utils.db import get_int_state
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from securiphant.utils.environment import environment_check_loop
 
 
 def main():
@@ -18,22 +13,7 @@ def main():
     and stores the result in the database
     :return: None
     """
-    engine = create_engine(uri)
-    _sessionmaker = sessionmaker(bind=engine)
-
-    while True:
-        session = _sessionmaker()
-        temperature, humidity = get_environment_data()
-        db_temperature = get_int_state("temperature", session)
-        db_humidity = get_int_state("humidity", session)
-
-        if temperature is not None:
-            db_temperature.value = temperature
-        if humidity is not None:
-            db_humidity.value = humidity
-
-        session.commit()
-        time.sleep(2)
+    environment_check_loop()
 
 
 if __name__ == "__main__":

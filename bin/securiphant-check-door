@@ -4,13 +4,7 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-import time
-from securiphant.db import uri
-from securiphant.utils.db import get_boolean_state
-from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from securiphant.utils.door import is_open
+from securiphant.utils.door import door_check_loop
 
 
 def main():
@@ -18,48 +12,9 @@ def main():
     This script checks the door sensor connected to the raspberry pi
     and determines whether or not the door is open, then writes the result to
     the shared database.
-
-    Two variables will be written to the database:
-
-    is_open: Determines whether or not the door is currently open
-    was_opened: Determines whether or not the door was opened in the past
-
     :return: None
     """
-    engine = create_engine(uri)
-    _sessionmaker = sessionmaker(bind=engine)
-
-    open_start = None
-
-    while True:
-
-        session = _sessionmaker()
-
-        door_open = get_boolean_state("door_open", session)
-        door_opened = get_boolean_state("door_opened", session)
-
-        if is_open():
-            door_open.value = True
-            door_opened.value = True
-
-            if open_start is None:
-                open_start = time.time()
-
-        else:
-            door_open.value = False
-
-            if open_start is not None:
-                was_authorized = \
-                    get_boolean_state("user_authorized", session).value
-                session.add(DoorOpenEvent(
-                    timestamp=int(time.time()),
-                    duration=int(time.time() - open_start),
-                    was_authorized=was_authorized
-                ))
-                open_start = None
-
-        session.commit()
-        time.sleep(0.5)
+    door_check_loop()
 
 
 if __name__ == "__main__":

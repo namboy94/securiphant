@@ -6,10 +6,9 @@ LICENSE"""
 
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Type
 from sqlalchemy.orm import Session
 from bokkichat.connection.Connection import Connection
-from bokkichat.entities.message.Message import Message
 from bokkichat.entities.message.TextMessage import TextMessage
 from bokkichat.entities.message.MediaMessage import MediaMessage, MediaType
 from kudubot.Bot import Bot
@@ -17,12 +16,13 @@ from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
 from securiphant.db import uri
 from securiphant.utils.camera import take_photos, record_videos
-from securiphant.utils.config import load_config
+from securiphant.utils.config import load_config, write_config
 from securiphant.utils.db import get_int_state, get_boolean_state
 from securiphant.alert_bot.AlertBotParser import AlertBotParser
 from securiphant.utils.systemd import securiphant_services, is_active
 from securiphant.utils.weather import get_weather
 from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
+from securiphant.utils.crypto import generate_random
 
 
 class AlertBot(Bot):
@@ -56,89 +56,94 @@ class AlertBot(Bot):
 
         self.false_alarm = False
 
-    def on_msg(self, message: Message, address: Address):
+    def on_command(
+            self,
+            message: TextMessage,
+            parser: CommandParser,
+            command: str,
+            args: Dict[str, Any],
+            sender: Address,
+            db_session: Session
+    ):
         """
-        Responds to messages from the user.
-        Only messages of the owner of the securiphant instance should ever
-        be taken into consideration
-        :param message: The received message
-        :param address: The address of the message's sender
+        Handles text messages that have been parsed as commands.
+        :param message: The original message
+        :param parser: The parser containing the command
+        :param command: The command name
+        :param args: The arguments of the command
+        :param sender: The database address of the sender
+        :param db_session: A valid database session
         :return: None
         """
-        if not message.is_text():
+        if command == "init":
+            self._handle_init(message, sender, args["key"])
             return
-        message = message  # type: TextMessage
 
-        db_session = self.create_db_session()
+        if sender.address != self.owner_address.address:
+            reply = message.make_reply()
+            reply.body = "Unauthorized"
+            self.connection.send(reply)
+            return
 
-        try:
-            parsed = self.parse(message)
-            if parsed is None:
-                return
-            _, command, args = parsed
+        if command == "false_alarm":
+            self._handle_false_alarm(db_session)
+        elif command == "video":
+            self._handle_video(args["seconds"])
+        elif command == "photo":
+            self._handle_photo()
+        elif command == "status":
+            self._handle_status(db_session)
+        elif command == "arm":
+            self._handle_arm(db_session)
+        elif command == "door_open_events":
+            self._handle_door_open_events(args["count"], db_session)
 
-            if command == "init":
-                if self.owner_address is not None:
-                    self.notify("Already initialized")
-                else:
-                    config = load_config()
-                    key = config["alert_bot_key"]
-                    if key == args["key"]:
-                        config["alert_bot_user_address"] = address.address
-                        self.owner_address = address
-                        self.notify("Initialized successfully")
-                    else:
-                        resp = message.make_reply(body="Invalid key")
-                        self.connection.send(resp)
-                return
+    def run_in_bg(self):
+        """
+        The logic of the background thread monitoring the database values
+        :return: None
+        """
+        waiting_for_authorization = False
+        tempfile_base = "/tmp/securiphant-recording"
+        recorded_videos = None
 
-            if address.address != self.owner_address.address:
-                reply = message.make_reply()
-                reply.body = "Unauthorized"
-                self.connection.send(reply)
-                return
+        while True:
+            time.sleep(1)
 
-            if command == "false_alarm":
-                door_opened = get_boolean_state("door_opened", db_session)
-                door_opened.value = False
-                self.false_alarm = True
-                db_session.commit()
-                self.notify("False Alarm confirmed.")
+            if self.false_alarm:
+                waiting_for_authorization = False
+                self.false_alarm = False
 
-            elif command == "video":
-                if args["seconds"] > 15:
-                    self.notify("Maximum video length is currently 15 seconds."
-                                " Trimming video to 15 seconds.")
-                    args["seconds"] = 15
+            db_session = self.sessionmaker()
+            door_opened = get_boolean_state("door_opened", db_session)
+            user_authorized = get_boolean_state("user_authorized", db_session)
+            going_out = get_boolean_state("going_out", db_session)
 
-                tempfile_base = "/tmp/securiphant-manual-video"
-                for _, path in record_videos(tempfile_base, args["seconds"]):
-                    self.send_video(path)
+            if going_out.value:
+                self.sessionmaker.remove()
+                continue
 
-            elif command == "photo":
-                tempfile_base = "/tmp/securiphant-manual-photo"
-                for _, path in take_photos(tempfile_base):
-                    self.send_image(path)
+            if door_opened.value:
 
-            elif command == "status":
-                self.send_status(db_session)
+                if user_authorized.value:  # Authorization disables alarm
+                    door_opened.value = False
+                    db_session.commit()
+                    waiting_for_authorization = False
 
-            elif command == "arm":
-                authorized = get_boolean_state("user_authorized", db_session)
-                authorized.value = False
-                db_session.commit()
-                self.notify("System has been armed")
+                elif waiting_for_authorization:  # Break-in confirmed
+                    self.notify("A break-in has been detected!")
+                    for _, path in recorded_videos:
+                        self._send_video(path)
+                    recorded_videos = record_videos(tempfile_base, 10, [0])
 
-            elif command == "door_open_events":
-                count = args["count"]
-                events = db_session.query(DoorOpenEvent)\
-                    .order_by("id").limit(count)
-                message = "Door Opened:\n\n"
-                for event in events:
-                    message += str(event)
-                self.notify(message)
+                else:  # Start timer and start recording
+                    waiting_for_authorization = True
+                    self.notify("Door has been opened")
+                    for _, path in take_photos(tempfile_base):
+                        self._send_image(path)
 
-        finally:
+                    recorded_videos = record_videos(tempfile_base, 10, [0])
+
             self.sessionmaker.remove()
 
     @classmethod
@@ -155,6 +160,25 @@ class AlertBot(Bot):
         """
         return [AlertBotParser()]
 
+    @classmethod
+    def create_config(cls, connection_cls: Type[Connection], path: str):
+        """
+        Extends the configuration creation process by generating a
+        key with which the owner may authenticate him/herself
+        :param connection_cls: The connection class for
+                               which to generate a config
+        :param path: The path of the configuration directory
+        :return: None
+        """
+        super().create_config(connection_cls, path)
+        key = generate_random(12)
+        config = load_config()
+        config["alert_bot_key"] = key
+        config["alert_bot_user_address"] = None
+        write_config(config)
+        print("Send the following text to the bot to initialize it:")
+        print("/init {}".format(key))
+
     def notify(self, message: str):
         """
         Sends a message to the owner
@@ -168,7 +192,26 @@ class AlertBot(Bot):
         )
         self.connection.send(message)
 
-    def send_image(self, path: str):
+    def _handle_init(self, message: TextMessage, sender: Address, key: str):
+        """
+        Handles the initialization of the bot's owner
+        :return: None
+        """
+        if self.owner_address is not None:
+            self.notify("Already initialized")
+
+        else:
+            config = load_config()
+            stored_key = config["alert_bot_key"]
+            if key == stored_key:
+                config["alert_bot_user_address"] = sender.address
+                self.owner_address = sender
+                self.notify("Initialized successfully")
+            else:
+                resp = message.make_reply(body="Invalid key")
+                self.connection.send(resp)
+
+    def _send_image(self, path: str):
         """
         Sends an image to the owner
         :param path: The path to the image file
@@ -183,7 +226,7 @@ class AlertBot(Bot):
             data
         ))
 
-    def send_video(self, path: str):
+    def _send_video(self, path: str):
         """
         Sends a video to the owner
         :param path: The path to the image file
@@ -198,7 +241,7 @@ class AlertBot(Bot):
             data
         ))
 
-    def send_status(self, session: Session):
+    def _handle_status(self, session: Session):
         """
         Sends the owner a status message
         :param session: The database session to use
@@ -237,50 +280,63 @@ class AlertBot(Bot):
         message = message.strip().replace("_", "\\_")
         self.notify(message)
 
-    def run_in_bg(self):
+    def _handle_false_alarm(self, db_session: Session):
         """
-        The logic of the background thread monitoring the database values
+        Handles a false alarm
+        :param db_session: The database session to use
         :return: None
         """
-        waiting_for_authorization = False
-        tempfile_base = "/tmp/securiphant-recording"
-        recorded_videos = None
+        door_opened = get_boolean_state("door_opened", db_session)
+        door_opened.value = False
+        self.false_alarm = True
+        db_session.commit()
+        self.notify("False Alarm confirmed.")
 
-        while True:
-            time.sleep(1)
+    def _handle_video(self, duration: int):
+        """
+        Handles recording and sending videos on /video commands
+        :param duration: The duration of the video to take
+        :return: None
+        """
+        if duration > 15:
+            self.notify("Maximum video length is currently 15 seconds."
+                        " Trimming video to 15 seconds.")
+            duration = 15
 
-            if self.false_alarm:
-                waiting_for_authorization = False
-                self.false_alarm = False
+        tempfile_base = "/tmp/securiphant-manual-video"
+        for _, path in record_videos(tempfile_base, duration):
+            self._send_video(path)
 
-            db_session = self.create_db_session()
-            door_opened = get_boolean_state("door_opened", db_session)
-            user_authorized = get_boolean_state("user_authorized", db_session)
-            going_out = get_boolean_state("going_out", db_session)
+    def _handle_photo(self):
+        """
+        Handles taking and sending photos on /photo commands
+        :return: None
+        """
+        tempfile_base = "/tmp/securiphant-manual-photo"
+        for _, path in take_photos(tempfile_base):
+            self._send_image(path)
 
-            if going_out.value:
-                self.sessionmaker.remove()
-                continue
+    def _handle_arm(self, db_session: Session):
+        """
+        Arms the alarm system when receiving a /arm command
+        :param db_session: The database session to use
+        :return: None
+        """
+        authorized = get_boolean_state("user_authorized", db_session)
+        authorized.value = False
+        db_session.commit()
+        self.notify("System has been armed")
 
-            if door_opened.value:
-
-                if user_authorized.value:  # Authorization disables alarm
-                    door_opened.value = False
-                    db_session.commit()
-                    waiting_for_authorization = False
-
-                elif waiting_for_authorization:  # Break-in confirmed
-                    self.notify("A break-in has been detected!")
-                    for _, path in recorded_videos:
-                        self.send_video(path)
-                    recorded_videos = record_videos(tempfile_base, 10, [0])
-
-                else:  # Start timer and start recording
-                    waiting_for_authorization = True
-                    self.notify("Door has been opened")
-                    for _, path in take_photos(tempfile_base):
-                        self.send_image(path)
-
-                    recorded_videos = record_videos(tempfile_base, 10, [0])
-
-            self.sessionmaker.remove()
+    def _handle_door_open_events(self, count: int, db_session: Session):
+        """
+        Sends the owner a summary of door opening events
+        :param count: The last n events to send
+        :param db_session: The database session to use
+        :return: None
+        """
+        events = db_session.query(DoorOpenEvent) \
+            .order_by("id").limit(count)
+        message = "Door Opened:\n\n"
+        for event in events:
+            message += str(event)
+        self.notify(message)

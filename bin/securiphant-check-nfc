@@ -4,59 +4,15 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-import time
-from securiphant.utils.crypto import verify_password
-from securiphant.utils.nfc import read_nfc_data
-from securiphant.utils.config import load_config
-from securiphant.db import uri
-from securiphant.utils.db import get_boolean_state
-from securiphant.utils.speech import speak
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from securiphant.utils.nfc import nfc_check_loop
 
 
 def main():
     """
-    This script checks whether the NFC reader reads an authenticated NFC tag
-    If a authenticated tag is held against the sensor, the value
-
-    is_authenticated
-
-    is set to True in the shared database
-
+    This script checks whether the NFC reader reads an authenticated NFC tag.
     :return: None
     """
-    engine = create_engine(uri)
-    _sessionmaker = sessionmaker(bind=engine)
-
-    while True:
-
-        key = read_nfc_data()
-        _hash = load_config()["nfc_hash"]
-
-        if verify_password(key, _hash):
-            session = _sessionmaker()
-            user_authorized = get_boolean_state("user_authorized", session)
-
-            user_authorized.value = not user_authorized.value
-            session.commit()
-
-            if user_authorized.value:
-                speak("Welcome Home!")
-            else:
-                going_out = get_boolean_state("going_out", session)
-                door_opened = get_boolean_state("door_opened", session)
-
-                going_out.value = True
-                session.commit()
-                speak("Goodbye.")
-                time.sleep(10)  # Give user time to leave
-
-                going_out.value = False
-                door_opened.value = False
-                session.commit()
-
-        time.sleep(3)
+    nfc_check_loop()
 
 
 if __name__ == "__main__":

@@ -4,12 +4,18 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
+
 import argparse
 from securiphant.utils.systemd import start_service, stop_service, \
     securiphant_services
 
-if __name__ == "__main__":
 
+def main():
+    """
+    This script enables the user to start or stop all
+    securiphant systemd units.
+    :return: None
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices={"start", "stop"})
     mode = parser.parse_args().mode
@@ -19,3 +25,7 @@ if __name__ == "__main__":
             start_service(service)
         else:
             stop_service(service)
+
+
+if __name__ == "__main__":
+    main()

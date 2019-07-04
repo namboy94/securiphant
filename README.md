@@ -78,6 +78,14 @@ be better due to including a lot more codecs during the preparatory phase.
 After both of those have been installed, you can simply run
 ```python3 setup.py install``` to install securiphant.
 
+To correctly function, securiphant also requires the following to be installed:
+
+* systemd
+* raspistill
+* raspivid
+* MP4Box
+* espeak
+
 ## Post-Installation Configuration
 
 After the installation, you'll have to take care of some configuration:

@@ -18,6 +18,7 @@ def post_install():
     """
     from securiphant.utils.db import initialize_database
     from securiphant.utils.config import config_dir
+    from securiphant.utils.systemd import reload_daemon
 
     systemd_dir = \
         os.path.join(os.path.expanduser("~"), ".config/systemd/user")
@@ -27,14 +28,18 @@ def post_install():
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)
 
+    initialize_database()
+
     for service_file in os.listdir("systemd"):
         copyfile(
             os.path.join("systemd", service_file),
             os.path.join(systemd_dir, service_file)
         )
+    reload_daemon()
 
-    initialize_database()
-
+    print("Make sure that `opencv-python` and `PyQT5` are installed")
+    print("Please make sure that the following other programs are installed:")
+    print("systemd\nraspistill\nraspivid\nMP4Box\nespeak")
     print("To finish configuring securiphant, run the following commands:")
     print("securiphant-nfc-initialize")
     print("securiphant-weather-initialize")

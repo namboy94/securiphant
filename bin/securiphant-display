@@ -5,10 +5,7 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-
-import sys
-from PyQt5.QtWidgets import QApplication
-from securiphant.qt.MainWindow import MainWindow
+from securiphant.utils.qt import start_display
 
 
 def main():
@@ -18,10 +15,7 @@ def main():
 
     :return: None
     """
-    app = QApplication(sys.argv)
-    form = MainWindow()
-    form.show()
-    app.exec_()
+    start_display()
 
 
 if __name__ == "__main__":

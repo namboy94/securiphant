@@ -7,6 +7,7 @@ LICENSE"""
 import bcrypt
 import random
 import string
+# TODO Put this in a library, this shouldn't be a part of this project
 
 
 def generate_random(length: int) -> str:

@@ -4,28 +4,15 @@ Copyright 2019 Hermann Krumrey <hermann@krumreyh.com>
 This file is part of securiphant.
 LICENSE"""
 
-from securiphant.utils.config import load_config, write_config
-from securiphant.utils.nfc import write_nfc_data
-from securiphant.utils.crypto import generate_hash, generate_random
-from securiphant.utils.speech import speak
+from securiphant.utils.nfc import initialize_nfc_tag
 
 
 def main():
     """
-    This script writes a key to an NFC tag and stores the hash in the database
+    This script writes a key to an NFC tag and stores the hash in the config
     :return: None
     """
-    config = load_config()
-
-    key = generate_random(48)  # Maximum capacity of NFC tag
-    _hash = generate_hash(key)
-
-    speak("Hold the NFC tag to the sensor now")
-    write_nfc_data(key)
-    speak("NFC Tag written successfully")
-
-    config["nfc_hash"] = _hash
-    write_config(config)
+    initialize_nfc_tag()
 
 
 if __name__ == "__main__":

@@ -47,20 +47,20 @@ def record_raspicam_video(seconds: int, target_file: str):
         if os.path.isfile(path):
             os.remove(path)
 
-    raspicam_lock.acquire()
-    call(
-        [
-            "raspivid",
-            "-o", h264_path,
-            "-t", str(seconds * 1000),
-            "-rot", "90",
-            "-n",
-            "-w", "1280",
-            "-h", "720"
-        ],
-        stdout=PIPE, stderr=PIPE
-    )
-    raspicam_lock.release()
+    with raspicam_lock:
+        call(
+            [
+                "raspivid",
+                "-o", h264_path,
+                "-t", str(seconds * 1000),
+                "-rot", "90",
+                "-n",
+                "-w", "1280",
+                "-h", "720"
+            ],
+            stdout=PIPE, stderr=PIPE
+        )
+
     # Box into MP4 file
     call(
         [
@@ -78,9 +78,8 @@ def take_raspicam_photo(target_file: str):
     :param target_file: The path to the file in which to store the photo
     :return: None
     """
-    raspicam_lock.acquire()
-    call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
-    raspicam_lock.release()
+    with raspicam_lock:
+        call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
 
 
 # noinspection PyUnusedLocal
@@ -103,33 +102,32 @@ def record_webcam_video(
     if camera_id not in webcam_locks:
         webcam_locks[camera_id] = Lock()
     lock = webcam_locks[camera_id]
-    lock.acquire()
 
-    mirror = False
-    fps = 20
+    with lock:
+        mirror = False
+        fps = 20
 
-    start = time.time()
-    camera = cv2.VideoCapture(camera_id)
+        start = time.time()
+        camera = cv2.VideoCapture(camera_id)
 
-    width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    codec = cv2.VideoWriter_fourcc(*_format)
-    writer = cv2.VideoWriter(target_file, codec, fps, (width, height))
+        width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        codec = cv2.VideoWriter_fourcc(*_format)
+        writer = cv2.VideoWriter(target_file, codec, fps, (width, height))
 
-    while time.time() - start < seconds and camera.isOpened():
+        while time.time() - start < seconds and camera.isOpened():
 
-        valid, frame = camera.read()
+            valid, frame = camera.read()
 
-        if valid:
-            if mirror:
-                frame = cv2.flip(frame, 1)
-            writer.write(frame)
-        else:
-            break
+            if valid:
+                if mirror:
+                    frame = cv2.flip(frame, 1)
+                writer.write(frame)
+            else:
+                break
 
-    camera.release()
-    writer.release()
-    lock.release()
+        camera.release()
+        writer.release()
 
 
 def take_webcam_photo(target_file: str, camera_id: int = 0):
@@ -142,13 +140,12 @@ def take_webcam_photo(target_file: str, camera_id: int = 0):
     if camera_id not in webcam_locks:
         webcam_locks[camera_id] = Lock()
     lock = webcam_locks[camera_id]
-    lock.acquire()
 
-    camera = cv2.VideoCapture(camera_id)
-    _, frame = camera.read()
-    cv2.imwrite(target_file, frame)
-    camera.release()
-    lock.release()
+    with lock:
+        camera = cv2.VideoCapture(camera_id)
+        _, frame = camera.read()
+        cv2.imwrite(target_file, frame)
+        camera.release()
 
 
 def record_videos(

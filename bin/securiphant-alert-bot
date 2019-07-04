@@ -5,36 +5,18 @@ This file is part of securiphant.
 LICENSE"""
 
 
-import sys
-from kudubot.helper import cli_bot_start
 from bokkichat.connection.impl.TelegramBotConnection import \
     TelegramBotConnection
+from kudubot.helper import cli_bot_start
 from securiphant.alert_bot.AlertBot import AlertBot
-from securiphant.utils.config import load_config, write_config
-from securiphant.utils.crypto import generate_random
 
 
 def main():
     """
     This script starts the alert bot.
-    If the --initialize flag is set, then the configuration is initialized
-    with a key with which the user can authenticate using telegram.
-    This is done to make sure only the user may get information about the
-    securiphant installation.
     :return: None
     """
-    try:
-        cli_bot_start(AlertBot, TelegramBotConnection)
-    except KeyboardInterrupt:
-        pass
-    if "--initialize" in sys.argv:
-        key = generate_random(12)
-        config = load_config()
-        config["alert_bot_key"] = key
-        config["alert_bot_user_address"] = None
-        write_config(config)
-        print("Send the following text to the bot to initialize it:")
-        print("/init {}".format(key))
+    cli_bot_start(AlertBot, TelegramBotConnection)
 
 
 if __name__ == "__main__":

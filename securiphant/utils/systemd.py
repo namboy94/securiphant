@@ -65,3 +65,11 @@ def systemctl_call(service: str, mode: str) -> int:
         stdout=PIPE
     )
     return state
+
+
+def reload_daemon():
+    """
+    Reloads the systemd daemon
+    :return: None
+    """
+    call(["systemctl", "--user", "daemon-reload"], stderr=PIPE, stdout=PIPE)
