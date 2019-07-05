@@ -20,11 +20,11 @@ LICENSE"""
 import json
 import requests
 import argparse
-from typing import Dict
+from typing import Dict, Optional
 from securiphant.utils.config import load_config, write_config
 
 
-def get_weather() -> Dict[str, str]:
+def get_weather() -> Optional[Dict[str, str]]:
     """
     Gets the weather data for a specified city
     :return: The weather data, including the following:
@@ -39,7 +39,10 @@ def get_weather() -> Dict[str, str]:
     url = "http://api.openweathermap.org/data/2.5/weather?" \
           "q={}&units=metric&APPID={}".format(location, api_key)
 
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        return None
     response_data = json.loads(response.text)
 
     data = {

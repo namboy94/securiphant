@@ -298,12 +298,14 @@ class AlertBot(Bot):
         in_temp = get_int_state("temperature", session).value
         in_humidity = get_int_state("humidity", session).value
 
-        weather_data = get_weather()
         message += "Inside Temperature: {}°C\nInside Humidity: {}%\n"\
             .format(in_temp, in_humidity)
-        message += "Outside Temperature: {}°C\nOutside Humidity: {}%\n"\
-            .format(weather_data["temperature"], weather_data["humidity"])
-        message += "Weather: {}\n\n".format(weather_data["weather_type"])
+
+        weather_data = get_weather()
+        if weather_data is not None:
+            message += "Outside Temperature: {}°C\nOutside Humidity: {}%\n"\
+                .format(weather_data["temperature"], weather_data["humidity"])
+            message += "Weather: {}\n\n".format(weather_data["weather_type"])
 
         message += "Sensor Data:\n"
         for key in [

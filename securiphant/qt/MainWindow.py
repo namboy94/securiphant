@@ -18,8 +18,9 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import time
+import urllib.error
+import urllib.request
 from typing import Dict
-from urllib.request import urlopen
 from datetime import datetime
 # noinspection PyPackageRequirements
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLCDNumber, QLabel
@@ -82,12 +83,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.refresh_thread.start()
 
         # Tux!
-        icon_data = urlopen(
-            "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png"
-        ).read()
-        icon_image = QImage()
-        icon_image.loadFromData(icon_data)
-        self.tux.setPixmap(QPixmap(icon_image))
+        try:
+            icon_data = urllib.request.urlopen(
+                "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png"
+            ).read()
+            icon_image = QImage()
+            icon_image.loadFromData(icon_data)
+            self.tux.setPixmap(QPixmap(icon_image))
+        except urllib.error.URLError:
+            pass
 
     @staticmethod
     def change_color(data: Dict[str, str or QWidget]):
@@ -266,8 +270,9 @@ class BGThread(QThread):
         Displays current weather data on the UI
         :return: None
         """
-        # TODO make sure that failing to get weather data doesn't crash the GUI
         weather_data = get_weather()
+        if weather_data is None:
+            return
         self.text_change.emit({
             "widget": self.gui.outside_temp_display,
             "text": weather_data["temperature"]
@@ -277,7 +282,12 @@ class BGThread(QThread):
             "text": weather_data["humidity"]
         })
 
-        icon_data = urlopen(weather_data["weather_icon"]).read()
-        icon_image = QImage()
-        icon_image.loadFromData(icon_data)
-        self.gui.weather_icon.setPixmap(QPixmap(icon_image))
+        try:
+            icon_data = urllib.request.urlopen(
+                weather_data["weather_icon"]
+            ).read()
+            icon_image = QImage()
+            icon_image.loadFromData(icon_data)
+            self.gui.weather_icon.setPixmap(QPixmap(icon_image))
+        except urllib.error.URLError:
+            pass
