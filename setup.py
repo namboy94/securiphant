@@ -62,6 +62,14 @@ def post_install():
 
 if __name__ == "__main__":
 
+    rpi_dependencies = [
+        "Adafruit_DHT",
+        "RPI.GPIO",
+        "spidev",
+        "mfrc522",
+        "pi-rc522"
+    ]
+
     setup(
         name="securiphant",
         version=open("version", "r").read(),
@@ -80,20 +88,15 @@ if __name__ == "__main__":
         install_requires=[
             "typing",
             "requests",
-            "RPI.GPIO",
-            "spidev",
-            "mfrc522",
-            "pi-rc522",
             "sqlalchemy",
             "kudubot",
             "bokkichat",
             "bcrypt",
-            "Adafruit_DHT",
             # "opencv-python",
             # "PyQt5"
-        ],
-        test_suite='nose.collector',
-        tests_require=['nose'],
+        ] + [] if sys.argv[1] == "test" else rpi_dependencies,
+        test_suite="nose.collector",
+        tests_require=["nose"],
         include_package_data=True,
         zip_safe=False
     )
