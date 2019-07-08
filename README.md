@@ -123,3 +123,12 @@ Using the systemd user unit would look like this:
 To run securiphant in its entirety, you can use the ```securiphant start```
 command. This starts all securiphant systemd user units.
 To stop these services, run ```securiphant stop```.
+
+## Further Information
+
+* [Changelog](CHANGELOG)
+* [License (GPLv3)](LICENSE)
+* [Gitlab](https://gitlab.namibsun.net/namibsun/python/securiphant)
+* [Github](https://github.com/namboy94/securiphant)
+* [Progstats](https://progstats.namibsun.net/projects/securiphant)
+* [PyPi](https://pypi.org/project/securiphant)
