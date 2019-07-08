@@ -49,6 +49,10 @@ def main():
     action = args.action
 
     if args.no_systemd:
+
+        print("Currently not supported")
+        exit(1)
+
         if action != "start":
             print("Actions besides 'start' don't work without systemd")
         else:

@@ -94,7 +94,7 @@ To initialize the RFID tag, run ```securiphant-nfc-initialize```
 after installation, then hold the RFID tag to use to the RFID reader.
 
 To initialize the weather configuration, run
-```securiphant-weather-initialize```.
+```securiphant-weather-initialize <APIKEY> <LOCATION>```.
 
 To initialize the telegram sending functionality,
 first run ```securiphant-alert-bot --initialize``` and enter your API
