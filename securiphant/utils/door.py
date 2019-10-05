@@ -20,7 +20,7 @@ LICENSE"""
 import time
 import RPi.GPIO as GPIO
 from threading import Lock
-from securiphant.db import uri
+from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_boolean_state
 from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
 from sqlalchemy import create_engine
@@ -57,7 +57,7 @@ def door_check_loop():
     was_opened: Determines whether or not the door was opened in the past
     :return: None
     """
-    _sessionmaker = sessionmaker(bind=create_engine(uri))
+    _sessionmaker = sessionmaker(bind=create_engine(generate_mysql_uri()))
 
     open_start = None
 

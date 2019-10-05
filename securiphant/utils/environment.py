@@ -22,7 +22,7 @@ import Adafruit_DHT
 import time
 from threading import Lock
 from typing import Tuple, Optional
-from securiphant.db import uri
+from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_int_state
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -58,7 +58,7 @@ def environment_check_loop():
     and stores the result in the database
     :return: None
     """
-    engine = create_engine(uri)
+    engine = create_engine(generate_mysql_uri())
     _sessionmaker = sessionmaker(bind=engine)
 
     while True:

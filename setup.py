@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
-
 import os
 import sys
+from shutil import copyfile
 from setuptools import setup, find_packages
 
 setup(
@@ -62,5 +62,21 @@ setup(
 )
 
 if "install" in sys.argv:
-    from securiphant.utils.init import post_install
-    post_install()
+    from securiphant.utils.config import config_dir, write_config
+    from securiphant.utils.systemd import systemd_dir, reload_daemon
+
+    if not os.path.isdir(systemd_dir):
+        os.makedirs(systemd_dir)
+    if not os.path.isdir(config_dir):
+        os.makedirs(config_dir)
+        write_config({})
+
+    for service_file in os.listdir("systemd"):
+        copyfile(
+            os.path.join("systemd", service_file),
+            os.path.join(systemd_dir, service_file)
+        )
+    reload_daemon()
+
+    print("To finish configuring securiphant, run the following commands:")
+    print("securiphant init <door|server|camera|display>")

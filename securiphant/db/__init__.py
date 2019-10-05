@@ -17,9 +17,8 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
-import os
 from sqlalchemy.ext.declarative import declarative_base
-from securiphant.utils.config import config_dir
+from securiphant.utils.config import load_config
 
 
 Base = declarative_base()
@@ -27,7 +26,13 @@ Base = declarative_base()
 The base database table class
 """
 
-uri = "sqlite:///" + os.path.join(config_dir, "db.sqlite")
-"""
-The database URI
-"""
+
+def generate_mysql_uri() -> str:
+    """
+    Generates a mysql URI for the stored confiuration
+    :return: The generated URI
+    """
+    config = load_config()["mysql"]
+    return "mysql://{}:{}@{}/securiphant".format(
+        config["user"], config["pass"], config["server"]
+    )

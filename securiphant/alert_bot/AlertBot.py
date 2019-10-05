@@ -26,7 +26,7 @@ from bokkichat.entities.message.MediaMessage import MediaMessage, MediaType
 from kudubot.Bot import Bot
 from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
-from securiphant.db import uri
+from securiphant.db import generate_mysql_uri
 from securiphant.utils.camera import take_photos, record_videos
 from securiphant.utils.config import load_config, write_config
 from securiphant.utils.db import get_int_state, get_boolean_state
@@ -59,7 +59,7 @@ class AlertBot(Bot):
         :param _: The database URI will always be the same as the main
                   securiphant sqlite database
         """
-        super().__init__(connection, location, uri)
+        super().__init__(connection, location, generate_mysql_uri())
 
         self.logger.debug("Looking for owner address")
         owner_address = load_config()["alert_bot_user_address"]

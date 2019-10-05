@@ -27,7 +27,7 @@ from sqlalchemy.orm import sessionmaker
 from securiphant.utils.crypto import verify_password, generate_random,\
     generate_hash
 from securiphant.utils.config import load_config
-from securiphant.db import uri
+from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_boolean_state
 from securiphant.utils.speech import speak
 
@@ -88,7 +88,7 @@ def nfc_check_loop():
     the system will be re-armed
     :return:
     """
-    engine = create_engine(uri)
+    engine = create_engine(generate_mysql_uri())
     _sessionmaker = sessionmaker(bind=engine)
 
     while True:

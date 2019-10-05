@@ -32,6 +32,7 @@ securiphant_services = {
     ],
     "server": [
         "securiphant-alert-bot",
+        "securiphant-speaker",
         # "securiphant-environment-sensor"
     ]
 }
@@ -61,6 +62,7 @@ def start_service(service: str):
     :return: None
     """
     if not is_active(service):
+        print("Starting service {}".format(service))
         systemctl_call(service, "start")
 
 
@@ -71,6 +73,7 @@ def stop_service(service: str):
     :return: None
     """
     if is_active(service):
+        print("Stopping service {}".format(service))
         systemctl_call(service, "stop")
 
 

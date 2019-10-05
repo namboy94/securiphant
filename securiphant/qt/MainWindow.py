@@ -31,7 +31,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from securiphant.qt.generated.main import Ui_MainWindow
 from securiphant.utils.systemd import is_active, start_service
 from securiphant.utils.config import load_config
-from securiphant.db import uri
+from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_int_state, get_boolean_state
 from securiphant.utils.weather import get_weather
 from sqlalchemy import create_engine
@@ -68,7 +68,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         self.config = load_config()
-        self.db_engine = create_engine(uri)
+        self.db_engine = create_engine(generate_mysql_uri())
         self.sessionmaker = scoped_session(sessionmaker(bind=self.db_engine))
 
         self.refresh_thread = BGThread(self)
