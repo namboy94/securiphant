@@ -20,7 +20,7 @@ LICENSE"""
 import time
 import urllib.error
 import urllib.request
-from typing import Dict
+from typing import Dict, Union
 from datetime import datetime
 # noinspection PyPackageRequirements
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLCDNumber, QLabel
@@ -94,31 +94,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             pass
 
     @staticmethod
-    def change_color(data: Dict[str, str or QWidget]):
+    def change_color(data: Dict[str, Union[str, QWidget]]):
         """
         Changes the color of a widget
         :param data: {"widget": widget, "color": "stylesheet"}
         :return: None
         """
-        data["widget"].setStyleSheet(data["color"])
+        widget = data["widget"]  # type: QWidget
+        color = data["color"]  # type: str
+        widget.setStyleSheet(color)
 
     @staticmethod
-    def change_text(data: Dict[str, str or QLabel]):
+    def change_text(data: Dict[str, Union[str, QLabel]]):
         """
         Changes the text of a widget
         :param data: {"widget": widget, "text": "text"}
         :return: None
         """
-        data["widget"].setText(data["text"])
+        widget = data["widget"]  # type: QLabel
+        text = data["text"]  # type: str
+        widget.setText(text)
 
     @staticmethod
-    def display_lcd_digits(data: Dict[str, str or QLCDNumber]):
+    def display_lcd_digits(data: Dict[str, Union[str, QLCDNumber]]):
         """
         Changes the digits displayed by a QLCDNumber
         :param data: {"widget": widget, "value": "value"}
         :return: None
         """
-        data["widget"].display(data["value"])
+        widget = data["widget"]  # type: QLCDNumber
+        value = data["value"]  # type: str
+        widget.display(value)
 
 
 # noinspection PyUnresolvedReferences

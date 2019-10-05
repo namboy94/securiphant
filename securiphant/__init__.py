@@ -20,7 +20,7 @@ LICENSE"""
 import pkg_resources
 
 
-sentry_dsn = ""
+sentry_dsn = "https://a42371c14e444bfd80ece22ab721cf6d@sentry.namibsun.net/14"
 """
 The sentry DSN used for logging exceptions
 """

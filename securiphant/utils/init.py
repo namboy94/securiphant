@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
-from typing import List
+from typing import List, Dict, Any
 from puffotter.prompt import prompt, prompt_comma_list
 from bokkichat.connection.impl.TelegramBotConnection import \
     TelegramBotConnection
@@ -36,7 +36,7 @@ def initialize(configurations: List[str]):
         "server": prompt("MySQL Server address: ", default="localhost"),
         "user": prompt("MySQL Username: "),
         "pass": prompt("MySQL Password: ")
-    }}
+    }}  # type: Dict[str, Any]
     write_config(config)
     initialize_database()
 

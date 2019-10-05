@@ -79,7 +79,6 @@ if __name__ == "__main__":
         "door-sensor",
         "nfc-sensor",
         "environment-sensor",
-        "alert-bot",
         "display",
         "speaker",
         "start",

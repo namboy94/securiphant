@@ -24,8 +24,7 @@ from mfrc522 import SimpleMFRC522
 from threading import Lock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from securiphant.utils.crypto import verify_password, generate_random,\
-    generate_hash
+from puffotter.crypto import verify_password, generate_random, generate_hash
 from securiphant.utils.config import load_config
 from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_boolean_state

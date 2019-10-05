@@ -26,6 +26,8 @@ from bokkichat.entities.message.MediaMessage import MediaMessage, MediaType
 from kudubot.Bot import Bot
 from kudubot.db.Address import Address as Address
 from kudubot.parsing.CommandParser import CommandParser
+from puffotter.crypto import generate_random
+from securiphant import version
 from securiphant.db import generate_mysql_uri
 from securiphant.utils.camera import take_photos, record_videos
 from securiphant.utils.config import load_config, write_config
@@ -34,8 +36,6 @@ from securiphant.alert_bot.AlertBotParser import AlertBotParser
 from securiphant.utils.systemd import securiphant_services, is_active
 from securiphant.utils.weather import get_weather
 from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
-from securiphant.utils.crypto import generate_random
-from securiphant import version
 
 
 class AlertBot(Bot):

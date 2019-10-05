@@ -162,7 +162,9 @@ You can start securiphant using systemd services by running
 ```securiphant start <roles>```
 
 Individual sevices can be started using their systemd services or directly
-using the ```securiphant``` command.
+using the ```securiphant``` command. The only exception to this is the 
+alert bot, which is invoked using its own ```securiphant-alert-bot``` command
+or the corresponding systemd service.
 
 To stop any running services, run ```securiphant stop```.
 

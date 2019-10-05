@@ -25,7 +25,7 @@ from threading import Thread, Lock
 from securiphant.utils.config import load_config
 
 
-webcam_locks = {}
+webcam_locks = {}  # type: Dict[int, Lock]
 """
 Locks for the webcams
 """
