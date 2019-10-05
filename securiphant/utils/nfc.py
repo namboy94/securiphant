@@ -26,7 +26,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from securiphant.utils.crypto import verify_password, generate_random,\
     generate_hash
-from securiphant.utils.config import load_config, write_config
+from securiphant.utils.config import load_config
 from securiphant.db import uri
 from securiphant.utils.db import get_boolean_state
 from securiphant.utils.speech import speak
@@ -121,19 +121,16 @@ def nfc_check_loop():
         time.sleep(3)
 
 
-def initialize_nfc_tag():
+def initialize_nfc_tag() -> str:
     """
-    Writes a key to an NFC tag and stores the hash in the configuration
+    Writes a key to an NFC tag and returns the hash
     :return: None
     """
-    config = load_config()
-
     key = generate_random(48)  # Maximum capacity of NFC tag
     _hash = generate_hash(key)
 
-    speak("Hold the NFC tag to the sensor now")
+    print("Hold the NFC tag to the sensor now")
     write_nfc_data(key)
-    speak("NFC Tag written successfully")
+    print("NFC Tag written successfully")
 
-    config["nfc_hash"] = _hash
-    write_config(config)
+    return _hash

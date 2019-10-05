@@ -17,18 +17,31 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
+import os
 from subprocess import call, PIPE
 
 
-securiphant_services = [
-    "alert-bot",
-    "check-door",
-    "check-nfc",
-    "check-environment",
-    "display"
-]
+securiphant_services = {
+    "door": [
+        "securiphant-door-sensor",
+        "securiphant-nfc-sensor",
+        # "securiphant-environment-sensor"
+    ],
+    "display": [
+        "securiphant-display"
+    ],
+    "server": [
+        "securiphant-alert-bot",
+        # "securiphant-environment-sensor"
+    ]
+}
 """
-A list of securiphant systemd services
+A dictionary mapping securiphant configurations to systemd services
+"""
+
+systemd_dir = os.path.join(os.path.expanduser("~"), ".config/systemd/user")
+"""
+Thje directory containing systemd service files
 """
 
 

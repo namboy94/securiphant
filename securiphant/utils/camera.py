@@ -19,17 +19,10 @@ LICENSE"""
 
 # noinspection PyPackageRequirements
 import cv2
-import os
 import time
 from typing import List, Dict, Optional
-from subprocess import call, PIPE
 from threading import Thread, Lock
 
-
-raspicam_lock = Lock()
-"""
-A lock for the raspberry pi camera
-"""
 
 webcam_locks = {}
 """
@@ -45,54 +38,6 @@ format_exts = {
 """
 Maps extensions to file extensions
 """
-
-
-def record_raspicam_video(seconds: int, target_file: str):
-    """
-    Records a video using raspicam
-    :param seconds: The time in seconds to record
-    :param target_file: The target video file path
-    :return: None
-    """
-    h264_path = target_file + ".h264"
-
-    for path in [h264_path, target_file]:
-        if os.path.isfile(path):
-            os.remove(path)
-
-    with raspicam_lock:
-        call(
-            [
-                "raspivid",
-                "-o", h264_path,
-                "-t", str(seconds * 1000),
-                "-rot", "90",
-                "-n",
-                "-w", "1280",
-                "-h", "720"
-            ],
-            stdout=PIPE, stderr=PIPE
-        )
-
-    # Box into MP4 file
-    call(
-        [
-            "MP4Box", "-add", h264_path, target_file
-        ],
-        stdout=PIPE,
-        stderr=PIPE
-    )
-    os.remove(h264_path)
-
-
-def take_raspicam_photo(target_file: str):
-    """
-    Takes a photo using the attached raspberry pi camera
-    :param target_file: The path to the file in which to store the photo
-    :return: None
-    """
-    with raspicam_lock:
-        call(["raspistill", "-o", target_file], stdout=PIPE, stderr=PIPE)
 
 
 # noinspection PyUnusedLocal
@@ -187,13 +132,8 @@ def record_videos(
     webcam_target_base = \
         target_file_base + "-webcam{}." + format_exts[webcam_format]
 
-    target_files = {
-        "raspi": target_file_base + "-raspi.mp4"
-    }
+    target_files = {}
 
-    raspi_thread = Thread(
-        target=lambda: record_raspicam_video(duration, target_files["raspi"])
-    )
     webcam_threads = []
     for webcam_id in webcam_ids:
 
@@ -210,7 +150,7 @@ def record_videos(
         )
         webcam_threads.append(webcam_thread)
 
-    _run_threads([raspi_thread] + webcam_threads)
+    _run_threads(webcam_threads)
 
     return target_files
 
@@ -225,19 +165,13 @@ def take_photos(
     :param webcam_ids: The webcam IDs to use
     :return: The paths to the generated image files
     """
-
     if webcam_ids is None:
         webcam_ids = [0]
+
     webcam_target_base = \
         target_file_base + "-webcam{}.png"
 
-    target_files = {
-        "raspi": target_file_base + "-raspi.png"
-    }
-
-    raspi_thread = Thread(
-        target=lambda: take_raspicam_photo(target_files["raspi"])
-    )
+    target_files = {}
 
     webcam_threads = []
     for webcam_id in webcam_ids:
@@ -249,7 +183,7 @@ def take_photos(
         )
         webcam_threads.append(webcam_thread)
 
-    _run_threads([raspi_thread] + webcam_threads)
+    _run_threads(webcam_threads)
     return target_files
 
 

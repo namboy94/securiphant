@@ -2,7 +2,7 @@
 Description=securiphant-display
 
 [Service]
-ExecStart=%h/.local/bin/securiphant-display
+ExecStart=%h/.local/bin/securiphant display
 
 [Install]
 WantedBy=default.target

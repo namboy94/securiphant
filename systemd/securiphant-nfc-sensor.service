@@ -2,7 +2,7 @@
 Description=securiphant-check-nfc
 
 [Service]
-ExecStart=%h/.local/bin/securiphant-check-nfc
+ExecStart=%h/.local/bin/securiphant nfc-sensor
 
 [Install]
 WantedBy=default.target

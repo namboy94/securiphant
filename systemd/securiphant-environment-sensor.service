@@ -2,7 +2,7 @@
 Description=securiphant-check-environment
 
 [Service]
-ExecStart=%h/.local/bin/securiphant-check-environment
+ExecStart=%h/.local/bin/securiphant environment-sensor
 
 [Install]
 WantedBy=default.target

@@ -16,3 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
+
+
+sentry_dsn = ""
+"""
+The sentry DSN used for logging exceptions
+"""

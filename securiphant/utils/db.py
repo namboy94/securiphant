@@ -19,7 +19,7 @@ LICENSE"""
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from securiphant.db import Base, uri
+from securiphant.db import Base
 
 
 # noinspection PyUnresolvedReferences
@@ -28,7 +28,7 @@ from securiphant.db.states.IntState import IntState
 
 
 # noinspection PyUnresolvedReferences
-def initialize_database():
+def initialize_database(uri: str):
     """
     Initializes the database, creating all tables and filling default
     key-value pairs.
@@ -56,6 +56,17 @@ def initialize_database():
             session.add(state_type(key=key, value=default_value))
 
     session.commit()
+
+
+def generate_mysql_uri(server: str, user: str, password: str) -> str:
+    """
+    Generates a mysql URI
+    :param server: The address of the mysql URI
+    :param user: The MySQL username
+    :param password: The MySQL password
+    :return: The generated URI
+    """
+    return "mysql://{}:{}@{}/securiphant".format(server, user, password)
 
 
 def get_int_state(key: str, session: Session) -> IntState:

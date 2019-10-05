@@ -70,7 +70,7 @@ Installing PyQT5 is as easy as running
 ```sudo apt install qt5-default pyqt5-dev pyqt5-dev-tools```
 
 OpenCV is a bit trickier and must be built from source.
-A guid for doing so that I have confirmed to work is available
+A guide for doing so that I have confirmed to work is available
 [here](https://www.pyimagesearch.com/2018/09/26/install-opencv-4-on-your-raspberry-pi/),
 although [this guide](https://www.learnopencv.com/install-opencv-4-on-raspberry-pi/) might
 be better due to including a lot more codecs during the preparatory phase.

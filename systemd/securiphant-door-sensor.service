@@ -2,7 +2,7 @@
 Description=securiphant-check-door
 
 [Service]
-ExecStart=%h/.local/bin/securiphant-check-door
+ExecStart=%h/.local/bin/securiphant door-sensor
 
 [Install]
 WantedBy=default.target

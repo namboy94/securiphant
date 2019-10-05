@@ -18,65 +18,83 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
-
 import argparse
-from threading import Thread
-from bokkichat.connection.impl.TelegramBotConnection import \
-    TelegramBotConnection
-from kudubot.helper import cli_bot_start
-from securiphant.alert_bot.AlertBot import AlertBot
-from securiphant.utils.systemd import start_service, stop_service, \
-    securiphant_services
-from securiphant.utils.qt import start_display
-from securiphant.utils.nfc import nfc_check_loop
+from puffotter.init import cli_start, argparse_add_verbosity
+from securiphant import sentry_dsn
+from securiphant.utils.init import initialize
 from securiphant.utils.door import door_check_loop
 from securiphant.utils.environment import environment_check_loop
+from securiphant.utils.nfc import nfc_check_loop
+from securiphant.utils.qt import start_display
+from securiphant.utils.systemd import securiphant_services, start_service, \
+    stop_service
 
 
-def main():
+def main(args: argparse. Namespace):
     """
-    This script enables the user to start or stop all
-    securiphant systemd units.
+    The main function of the securiphant application
+    :param args: The command line arguments
     :return: None
     """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices={"start", "stop"},
-                        help="The action to execute")
-    parser.add_argument("--no-systemd", action="store_true",
-                        help="Run securiphant without systemd")
-    args = parser.parse_args()
+    if args.mode == "init":
+        initialize(args.configurations)
 
-    action = args.action
+    elif args.mode == "door-sensor":
+        door_check_loop()
 
-    if args.no_systemd:
+    elif args.mode == "nfc-sensor":
+        nfc_check_loop()
 
-        print("Currently not supported")
-        exit(1)
+    elif args.mode == "environment-sensor":
+        environment_check_loop()
 
-        if action != "start":
-            print("Actions besides 'start' don't work without systemd")
-        else:
-            threads = [
-                Thread(target=start_display),
-                Thread(target=nfc_check_loop),
-                Thread(target=door_check_loop),
-                Thread(target=environment_check_loop),
-                Thread(target=lambda: cli_bot_start(
-                    AlertBot, TelegramBotConnection
-                ))
-            ]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
+    elif args.mode == "display":
+        start_display()
 
-    else:
-        for service in securiphant_services:
-            if action == "start":
+    elif args.mode == "start":
+        for configuration, services in securiphant_services.items():
+            if configuration not in args.configurations:
+                continue
+            for service in services:
                 start_service(service)
-            else:
+
+    elif args.mode == "stop":
+        for _, services in securiphant_services.items():
+            for service in services:
                 stop_service(service)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    argparse_add_verbosity(parser)
+    mode_parser = parser.add_subparsers(dest="mode")
+
+    parsers = {}
+    for key in [
+        "init",
+        "door-sensor",
+        "nfc-sensor",
+        "environment-sensor",
+        "display",
+        "start",
+        "stop"
+    ]:
+        parsers[key] = mode_parser.add_parser(key)
+        argparse_add_verbosity(parsers[key])
+
+    parsers["init"].add_argument(
+        "configurations", nargs="+", choices=securiphant_services.keys(),
+        help="For which securiphant role(s) this device should be set up"
+    )
+    parsers["start"].add_argument(
+        "configurations", nargs="+", choices=securiphant_services.keys(),
+        help="Which securiphant configurations to start"
+    )
+
+    cli_start(
+        main,
+        parser,
+        "Thanks for using securiphant!",
+        "securiphant",
+        sentry_dsn
+    )
