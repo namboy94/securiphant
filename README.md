@@ -81,10 +81,9 @@ After both of those have been installed, you can simply run
 To correctly function, securiphant also requires the following to be installed:
 
 * systemd
-* raspistill
-* raspivid
-* MP4Box
-* espeak
+* opencv 4.0
+* flite
+* python3-mysqldb
 
 ## Post-Installation Configuration
 

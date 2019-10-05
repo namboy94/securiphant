@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-check-nfc
+Description=securiphant-nfc-sensor
 
 [Service]
 ExecStart=%h/.local/bin/securiphant nfc-sensor -q

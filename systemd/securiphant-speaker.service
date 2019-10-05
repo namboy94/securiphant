@@ -1,0 +1,8 @@
+[Unit]
+Description=securiphant-speaker
+
+[Service]
+ExecStart=%h/.local/bin/securiphant speaker -q
+
+[Install]
+WantedBy=default.target

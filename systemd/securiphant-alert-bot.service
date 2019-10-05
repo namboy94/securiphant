@@ -2,7 +2,7 @@
 Description=securiphant-alert-bot
 
 [Service]
-ExecStart=%h/.local/bin/securiphant alert-bot -q
+ExecStart=%h/.local/bin/securiphant-alert-bot
 
 [Install]
 WantedBy=default.target

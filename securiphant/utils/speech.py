@@ -17,13 +17,40 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
-from subprocess import call, PIPE
+import time
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from securiphant.db.events.SpeakerEvent import SpeakerEvent
+from securiphant.db import generate_mysql_uri
 
 
-def speak(text: str):
+def queue_speaker_event(db_session: Session, text: str):
     """
-    Uses the speakers to say a phrase
+    Queues a new speaker event in the database
+    :param db_session: The database session to use
     :param text: The text to speak
     :return: None
     """
-    call(["espeak", text], stderr=PIPE, stdout=PIPE)
+    event = SpeakerEvent(text=text, timestamp=int(time.time()))
+    db_session.add(event)
+    db_session.commit()
+
+
+def speaker_loop():
+    """
+    Continuously checks for new speaker events and executes any ones that were
+    not yet executed.
+    :return: None
+    """
+    _sessionmaker = sessionmaker(bind=create_engine(generate_mysql_uri()))
+    while True:
+        session = _sessionmaker()
+
+        events = session.query(SpeakerEvent).filter_by(executed=False).all()
+        events.sort(key=lambda x: x.timestamp)
+        for event in events:
+            event.play()
+            event.executed = True
+
+        session.commit()
+        time.sleep(0.1)

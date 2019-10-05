@@ -18,21 +18,21 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import os
-from subprocess import call, PIPE
+from subprocess import Popen, DEVNULL
 
 
 securiphant_services = {
     "door": [
-        "securiphant-door-sensor",
-        "securiphant-nfc-sensor",
+        "door-sensor",
+        "nfc-sensor",
         # "securiphant-environment-sensor"
     ],
     "display": [
-        "securiphant-display"
+        "display"
     ],
     "server": [
-        "securiphant-alert-bot",
-        "securiphant-speaker",
+        "alert-bot",
+        "speaker",
         # "securiphant-environment-sensor"
     ]
 }
@@ -84,15 +84,15 @@ def systemctl_call(service: str, mode: str) -> int:
     :param mode: The command mode (ex: start or stop)
     :return: The status code of the call
     """
-    state = call(
+    state = Popen(
         [
             "systemctl", "--user",
             mode,
             "securiphant-{}.service".format(service)
         ],
-        stderr=PIPE,
-        stdout=PIPE
-    )
+        stderr=DEVNULL,
+        stdout=DEVNULL
+    ).wait()
     return state
 
 
@@ -101,4 +101,8 @@ def reload_daemon():
     Reloads the systemd daemon
     :return: None
     """
-    call(["systemctl", "--user", "daemon-reload"], stderr=PIPE, stdout=PIPE)
+    Popen(
+        ["systemctl", "--user", "daemon-reload"],
+        stderr=DEVNULL,
+        stdout=DEVNULL
+    ).wait()

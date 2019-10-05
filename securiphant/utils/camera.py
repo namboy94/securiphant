@@ -20,13 +20,14 @@ LICENSE"""
 # noinspection PyPackageRequirements
 import cv2
 import time
-from typing import List, Dict, Optional
+from typing import List, Dict
 from threading import Thread, Lock
+from securiphant.utils.config import load_config
 
 
 webcam_locks = {}
 """
-A list of locks for the webcams
+Locks for the webcams
 """
 
 
@@ -114,21 +115,19 @@ def take_webcam_photo(target_file: str, camera_id: int = 0):
 def record_videos(
         target_file_base: str,
         duration: int,
-        webcam_ids: Optional[List[int]] = None,
         webcam_format: str = "MJPG"
 ) -> Dict[str, str]:
     """
-    Records video on multiple cameras at once
+    Records video on all registered cameras
     :param target_file_base: The base of the target file. Will be appended
                              relevant information at the end.
                              Example: video-0.mp4 for webcam 0
     :param duration: The duration of the recording
-    :param webcam_ids: The ids of the webcams to use. Defaults to [0]
     :param webcam_format: The format to use for webcams
     :return: The paths to the image files
     """
-    if webcam_ids is None:
-        webcam_ids = [0]
+    webcam_ids = load_config()["cameras"]
+
     webcam_target_base = \
         target_file_base + "-webcam{}." + format_exts[webcam_format]
 
@@ -155,18 +154,13 @@ def record_videos(
     return target_files
 
 
-def take_photos(
-        target_file_base: str,
-        webcam_ids: Optional[List[int]] = None,
-) -> Dict[str, str]:
+def take_photos(target_file_base: str) -> Dict[str, str]:
     """
-    Takes a photo using multiple cameras
+    Takes a photo using all registered cameras
     :param target_file_base: The target file base
-    :param webcam_ids: The webcam IDs to use
     :return: The paths to the generated image files
     """
-    if webcam_ids is None:
-        webcam_ids = [0]
+    webcam_ids = load_config()["cameras"]
 
     webcam_target_base = \
         target_file_base + "-webcam{}.png"

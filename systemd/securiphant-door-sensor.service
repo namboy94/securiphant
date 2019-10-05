@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-check-door
+Description=securiphant-door-sensor
 
 [Service]
 ExecStart=%h/.local/bin/securiphant door-sensor -q

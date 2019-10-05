@@ -34,6 +34,7 @@ def initialize_database():
     from securiphant.db.states.BooleanState import BooleanState
     from securiphant.db.states.IntState import IntState
     from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
+    from securiphant.db.events.SpeakerEvent import SpeakerEvent
 
     db_engine = create_engine(generate_mysql_uri())
     Base.metadata.create_all(db_engine, checkfirst=True)

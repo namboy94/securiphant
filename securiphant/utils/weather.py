@@ -35,7 +35,7 @@ def get_weather() -> Optional[Dict[str, str]]:
     """
     config = load_config()
     api_key = config["openweathermap_api_key"]
-    location = config["location_city"]
+    location = config["openweathermap_city"]
     url = "http://api.openweathermap.org/data/2.5/weather?" \
           "q={}&units=metric&APPID={}".format(location, api_key)
 
@@ -54,23 +54,3 @@ def get_weather() -> Optional[Dict[str, str]]:
             .format(response_data["weather"][0]["icon"])
     }
     return data
-
-
-def initialize_weather_config():
-    """
-    Initializes the weather configuration using CLI arguments
-    :return:
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("openweathermap_api_key",
-                        help="The API Key for openweathermap.org")
-    parser.add_argument("location_city",
-                        help="The city for which to display weather data")
-    args = parser.parse_args()
-    config = load_config()
-    config["openweathermap_api_key"] = args.openweathermap_api_key
-    config["location_city"] = args.location_city
-    write_config(config)
-
-    print("Testing configuration: ")
-    print(get_weather())

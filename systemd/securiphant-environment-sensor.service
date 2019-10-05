@@ -1,5 +1,5 @@
 [Unit]
-Description=securiphant-check-environment
+Description=securiphant-environment-sensor
 
 [Service]
 ExecStart=%h/.local/bin/securiphant environment-sensor -q

@@ -21,11 +21,6 @@ LICENSE"""
 import argparse
 from puffotter.init import cli_start, argparse_add_verbosity
 from securiphant import sentry_dsn
-from securiphant.utils.init import initialize
-from securiphant.utils.door import door_check_loop
-from securiphant.utils.environment import environment_check_loop
-from securiphant.utils.nfc import nfc_check_loop
-from securiphant.utils.qt import start_display
 from securiphant.utils.systemd import securiphant_services, start_service, \
     stop_service
 
@@ -37,19 +32,28 @@ def main(args: argparse. Namespace):
     :return: None
     """
     if args.mode == "init":
+        from securiphant.utils.init import initialize
         initialize(args.configurations)
 
     elif args.mode == "door-sensor":
+        from securiphant.utils.door import door_check_loop
         door_check_loop()
 
     elif args.mode == "nfc-sensor":
+        from securiphant.utils.nfc import nfc_check_loop
         nfc_check_loop()
 
     elif args.mode == "environment-sensor":
+        from securiphant.utils.environment import environment_check_loop
         environment_check_loop()
 
     elif args.mode == "display":
+        from securiphant.utils.qt import start_display
         start_display()
+
+    elif args.mode == "speaker":
+        from securiphant.utils.speech import speaker_loop
+        speaker_loop()
 
     elif args.mode == "start":
         for configuration, services in securiphant_services.items():
@@ -75,7 +79,9 @@ if __name__ == "__main__":
         "door-sensor",
         "nfc-sensor",
         "environment-sensor",
+        "alert-bot",
         "display",
+        "speaker",
         "start",
         "stop"
     ]:

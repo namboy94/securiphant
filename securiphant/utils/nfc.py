@@ -29,7 +29,7 @@ from securiphant.utils.crypto import verify_password, generate_random,\
 from securiphant.utils.config import load_config
 from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_boolean_state
-from securiphant.utils.speech import speak
+from securiphant.utils.speech import queue_speaker_event
 
 
 nfc_lock = Lock()
@@ -104,14 +104,14 @@ def nfc_check_loop():
             session.commit()
 
             if user_authorized.value:
-                speak("Welcome Home!")
+                queue_speaker_event(session, "Welcome Home!")
             else:
                 going_out = get_boolean_state("going_out", session)
                 door_opened = get_boolean_state("door_opened", session)
 
                 going_out.value = True
                 session.commit()
-                speak("Goodbye.")
+                queue_speaker_event(session, "Goodbye.")
                 time.sleep(10)  # Give user time to leave
 
                 going_out.value = False

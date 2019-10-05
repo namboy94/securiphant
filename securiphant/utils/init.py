@@ -22,9 +22,7 @@ from puffotter.prompt import prompt, prompt_comma_list
 from bokkichat.connection.impl.TelegramBotConnection import \
     TelegramBotConnection
 from securiphant.utils.db import initialize_database
-from securiphant.utils.config import config_dir, write_config
-from securiphant.utils.nfc import initialize_nfc_tag
-from securiphant.alert_bot.AlertBot import AlertBot
+from securiphant.utils.config import config_dir, write_config, load_config
 
 
 def initialize(configurations: List[str]):
@@ -42,19 +40,26 @@ def initialize(configurations: List[str]):
     write_config(config)
     initialize_database()
 
-    if "display" in configurations:
+    if "server" in configurations or "display" in configurations:
         config["openweathermap_api_key"] = \
             prompt("openweathermap.org API key: ")
         config["openweathermap_city"] = prompt("openweathermap city: ")
+
+    if "display" in configurations:
         print("Make sure that `PyQT5` is installed")
 
     if "door" in configurations:
+        from securiphant.utils.nfc import initialize_nfc_tag
         config["nfc_hash"] = initialize_nfc_tag()
 
     if "server" in configurations:
-        config["cameras"] = \
-            prompt_comma_list("Connected Camera IDs: ", min_count=1)
+        from securiphant.alert_bot.AlertBot import AlertBot
+        config["cameras"] = prompt_comma_list(
+            "Connected Camera IDs: ", min_count=1, primitive_type=int
+        )
+        print("Alert Bot Configuration:")
         AlertBot.create_config(TelegramBotConnection, config_dir)
+        config.update(load_config())  # Need to get values stored by bot
         print("Don't forget to connect a speaker!")
         print("Make sure that `opencv-python` and `flite` are installed")
 

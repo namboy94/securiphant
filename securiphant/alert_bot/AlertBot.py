@@ -118,7 +118,7 @@ class AlertBot(Bot):
                         self._send_video(path)
 
                     self.logger.debug("Recording additional video")
-                    recorded_videos = record_videos(tempfile_base, 10, [0])
+                    recorded_videos = record_videos(tempfile_base, 10)
 
                 else:  # Start timer and start recording
                     self.logger.warning("Door has been opened and "
@@ -127,7 +127,7 @@ class AlertBot(Bot):
                     self.send_txt(self.owner_address, "Door has been opened")
 
                     self.logger.debug("Recording video of would-be burglar")
-                    recorded_videos = record_videos(tempfile_base, 10, [0])
+                    recorded_videos = record_videos(tempfile_base, 10)
 
             self.sessionmaker.remove()
 
@@ -149,13 +149,13 @@ class AlertBot(Bot):
             self,
             address: Address,
             _: Dict[str, Any],
-            db_session: Session
+            __: Session
     ) -> bool:
         """
         Checks if a user is authorized
         :param address: The user to check
         :param _: possible command arguments
-        :param db_session: The database session to use
+        :param __: The database session to use
         :return: True if authorized, False otherwise
         """
         return self.owner_address is not None \
@@ -306,7 +306,7 @@ class AlertBot(Bot):
         :param __: The database session to use
         :return: None
         """
-        duration = args["duration"]
+        duration = args["seconds"]
         if duration > 15:
             self.send_txt(
                 self.owner_address,
