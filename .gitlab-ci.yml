@@ -25,19 +25,13 @@ stylecheck:
   stage: test
   tags: [docker]
   script:
-    - python-codestyle-check
+    - python-codestyle-check --exclude securiphant/qt/generated
 
 type_check:
   stage: test
   tags: [docker]
   script:
     - python-static-type-check
-
-unittest:
-  stage: test
-  tags: [docker]
-  script:
-    - python-unittest
 
 gitstats:
   stage: stats
