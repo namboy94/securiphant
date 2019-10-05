@@ -7,12 +7,13 @@
 ![Logo](resources/logo/logo-readme.png)
 
 securiphant is a surveillance, security and home automation solution
-meant to be used on a raspberry pi. It currently offers the following
-functionality:
+meant to be used on one or multiple raspberry pis.
+It currently offers the following functionality:
 
 * Remote Access to video footage of cameras connected to the raspberry pi
 * A display displaying the state of the system and environmental data
 * An automated break-in detector with alerts sent via telegram
+* Speaker support
 
 # What does it do
 
@@ -39,7 +40,7 @@ of the system.
 
 # Setup
 
-The setup requires the following parts:
+The basic setup utilizing a single raspberry pi requires the following parts:
 
 * Raspberry Pi 3 Model B
 * MicroSD card
@@ -63,65 +64,107 @@ The project was developed using python 3, it most likely won't
 work using python 2, so make sure to always use ```python3```
 and ```pip3```.
 
-Securiphant makes use of ```PyQT5``` and ```python-opencv```, both
-of which can not be installed using ```pip3```.
+The project is designed to be able to support using multiple raspberry pis
+that communicate using a shared mysql/mariadb database.
 
-Installing PyQT5 is as easy as running
-```sudo apt install qt5-default pyqt5-dev pyqt5-dev-tools```
+There are three available roles:
 
-OpenCV is a bit trickier and must be built from source.
+* server
+* door
+* display
+
+## Dependecies
+
+All of the roles require slightly different dependencies. Common dependencies
+include:
+
+* python3+extras (```sudo apt install python3 python3-pip python3-dev```)
+* mysqldb for python3 (```sudo apt install python3-mysqldb```)
+* libffi-dev (```sudo apt install libffi-dev```)
+* systemd (Should be installed on a default raspbian installation)
+
+We will now detail additional dependencies for the specific roles:
+
+**server**
+
+The server role requires a set of connected speakers as well as the webcams 
+used for security footage to be connected to it.
+
+On the software side, we'll have to install the following programs:
+
+* flite(including alsa) ([Install Script](resources/scripts/install-flite.sh))
+* opencv 4.0 ([Install Script](resources/scripts/install-opencv.sh))
+
+Installing OpenCV can be a bit tricky as it must be built from source.
 A guide for doing so that I have confirmed to work is available
 [here](https://www.pyimagesearch.com/2018/09/26/install-opencv-4-on-your-raspberry-pi/),
 although [this guide](https://www.learnopencv.com/install-opencv-4-on-raspberry-pi/) might
 be better due to including a lot more codecs during the preparatory phase.
+The linked install script is based on the first article.
 
-After both of those have been installed, you can simply run
-```python3 setup.py install``` to install securiphant.
+**display**
 
-To correctly function, securiphant also requires the following to be installed:
+The display only required a graphical display of sorts and PyQt5, which may
+be installed either via pip:
 
-* systemd
-* opencv 4.0
-* flite
-* python3-mysqldb
+```pip3 install PyQt5```
+
+or via apt:
+
+```sudo apt install qt5-default pyqt5-dev pyqt5-dev-tools```
+
+The display role does not necessarily run on a raspberry pi, it can run on
+pretty much anything with support for PyQt5 and mysql.
+
+If you plan on running this on Arch Linux, make sure to install arch's version
+of mysqldb using ```sudo pacman -S python-mysqlclient```
+
+**door**
+
+The raspberry pi connected to the NFC and door sensors does not require
+any special software dependencies. However, SPI must be enabled for the
+NFC sensor to function correctly.
+
+To enable SPI, run ```sudo raspi-config``` and enable SPI under
+'5 Interfacing Options/P4 SPI'
+
+## Securiphant Installation
+
+Installing securiphant can be done by running ```python3 setup.py install```
+or ```pip3 install securiphant```.
+
+During installation, the setup script will create a configuration directory
+at ~/.config/securiphant if one does not exist yet.
+
 
 ## Post-Installation Configuration
 
-After the installation, you'll have to take care of some configuration:
+After the installation, you'll have to take care of some configuration
+depending on the roles the device you're running it on should carry out.
 
-To initialize the RFID tag, run ```securiphant-nfc-initialize```
-after installation, then hold the RFID tag to use to the RFID reader.
+To start initializing the configuration, run the following command:
 
-To initialize the weather configuration, run
-```securiphant-weather-initialize <APIKEY> <LOCATION>```.
+```securiphant init <roles>```
 
-To initialize the telegram sending functionality,
-first run ```securiphant-alert-bot --initialize``` and enter your API
-key. At the end, a key wil be output onto the command line. Take note of this
-key, as you'll have to use it to register your telegram address with the
-bot.
-Afterwards, start the bot using ```securiphant-alert-bot``` and send it
-the message ```/start```. Then send it the key you received in the previous
-step using ```/init <KEY>```. Once initialized, the bot won't react to any
-other telegram users but this one. To reset this key, run
-```securiphant-alert-bot --initialize``` once more.
+and replace ```<roles>``` with the roles the device should fulfill. For example,
+if we want the device to be both a ```server``` and ```door```, we'd run
+
+```securiphant init server door```
+
+This will start a prompt for configuration information. Answer the prompts and
+at the end a working configuration should be generated. It's important to have
+a working mysql/mariadb installation set up and running before this point.
 
 # Running the application
 
-You can start each individual securiphant module either by running
-the script itself or start the systemd user unit.
+You can start securiphant using systemd services by running
 
-Running the script directly would look like this:
+```securiphant start <roles>```
 
-```securiphant-display```
+Individual sevices can be started using their systemd services or directly
+using the ```securiphant``` command.
 
-Using the systemd user unit would look like this:
-
-```systemctl --user start securiphant-display.service```
-
-To run securiphant in its entirety, you can use the ```securiphant start```
-command. This starts all securiphant systemd user units.
-To stop these services, run ```securiphant stop```.
+To stop any running services, run ```securiphant stop```.
 
 ## Further Information
 
