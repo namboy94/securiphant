@@ -56,7 +56,7 @@ def initialize(configurations: List[str]):
 
     if "server" in configurations:
         voice_file = os.path.join(config_dir, "voice.flitevox")
-        if os.path.isfile(voice_file):
+        if not os.path.isfile(voice_file):
             print("Downloading flite voice file...")
             urlretrieve("http://www.festvox.org/flite/packed/flite-2.0/"
                         "voices/cmu_us_aew.flitevox", voice_file)
