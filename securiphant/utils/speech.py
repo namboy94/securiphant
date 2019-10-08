@@ -20,6 +20,7 @@ LICENSE"""
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from securiphant.db import generate_mysql_uri
 from securiphant.db.events.SpeakerEvent import SpeakerEvent
 
 
