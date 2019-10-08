@@ -17,10 +17,12 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
+import os
 from typing import List, Dict, Any
 from puffotter.prompt import prompt, prompt_comma_list
 from bokkichat.connection.impl.TelegramBotConnection import \
     TelegramBotConnection
+from urllib.request import urlretrieve
 from securiphant.utils.db import initialize_database
 from securiphant.utils.config import config_dir, write_config, load_config
 
@@ -53,6 +55,12 @@ def initialize(configurations: List[str]):
         config["nfc_hash"] = initialize_nfc_tag()
 
     if "server" in configurations:
+        voice_file = os.path.join(config_dir, "voice.flitevox")
+        if os.path.isfile(voice_file):
+            print("Downloading flite voice file...")
+            urlretrieve("http://www.festvox.org/flite/packed/flite-2.0/"
+                        "voices/cmu_us_aew.flitevox", voice_file)
+
         from securiphant.alert_bot.AlertBot import AlertBot
         config["cameras"] = prompt_comma_list(
             "Connected Camera IDs: ", min_count=1, primitive_type=int

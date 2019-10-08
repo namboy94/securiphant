@@ -21,7 +21,6 @@ import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from securiphant.db.events.SpeakerEvent import SpeakerEvent
-from securiphant.db import generate_mysql_uri
 
 
 def queue_speaker_event(db_session: Session, text: str):

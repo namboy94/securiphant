@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
+import os
 from securiphant.db import Base
 from sqlalchemy import Column, String, Integer, Boolean
 from subprocess import Popen, DEVNULL
+from securiphant.utils.config import config_dir
 
 
 class SpeakerEvent(Base):
@@ -57,7 +59,12 @@ class SpeakerEvent(Base):
         Plays the text over the speaker using flite
         :return: None
         """
+        voice = "awb"
+        voice_file = os.path.join(config_dir, "voice.flitevox")
+        if os.path.isfile(voice_file):
+            voice = voice_file
+
         Popen(
-            ["flite", "-voice", "awb", "-t", self.text],
+            ["flite", "-voice", voice, "-t", self.text],
             stdout=DEVNULL, stderr=DEVNULL
         ).wait()
