@@ -33,7 +33,8 @@ def main():
     cli_bot_start(
         AlertBot,
         TelegramBotConnection,
-        sentry_dsn
+        sentry_dsn,
+        "securiphant"
     )
 
 
