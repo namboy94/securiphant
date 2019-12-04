@@ -18,6 +18,7 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import time
+import logging
 import RPi.GPIO as GPIO
 from threading import Lock
 from securiphant.db import generate_mysql_uri
@@ -58,6 +59,7 @@ def door_check_loop():
     :return: None
     """
     _sessionmaker = sessionmaker(bind=create_engine(generate_mysql_uri()))
+    logger = logging.getLogger("door-sensor")
 
     open_start = None
 
@@ -69,13 +71,17 @@ def door_check_loop():
         door_opened = get_boolean_state("door_opened", session)
 
         if is_open():
+            logger.debug("Door is open")
+
             door_open.value = True
             door_opened.value = True
 
             if open_start is None:
+                logger.info("Door was opened")
                 open_start = time.time()
 
         else:
+            logger.debug("Door is closed")
             door_open.value = False
 
             if open_start is not None:
@@ -87,6 +93,7 @@ def door_check_loop():
                     was_authorized=was_authorized
                 ))
                 open_start = None
+                logger.info("Door was closed")
 
         session.commit()
         time.sleep(0.3)

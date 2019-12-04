@@ -18,6 +18,7 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import time
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from securiphant.db import generate_mysql_uri
@@ -43,12 +44,15 @@ def speaker_loop():
     :return: None
     """
     _sessionmaker = sessionmaker(bind=create_engine(generate_mysql_uri()))
+    logger = logging.getLogger("speaker")
+
     while True:
         session = _sessionmaker()
 
         events = session.query(SpeakerEvent).filter_by(executed=False).all()
         events.sort(key=lambda x: x.timestamp)
         for event in events:
+            logger.debug("Playing text {}".format(event.text))
             event.play()
             event.executed = True
 

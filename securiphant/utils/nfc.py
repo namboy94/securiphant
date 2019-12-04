@@ -18,6 +18,7 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import time
+import logging
 import RPi.GPIO as GPIO
 from pirc522 import RFID
 from mfrc522 import SimpleMFRC522
@@ -89,13 +90,18 @@ def nfc_check_loop():
     """
     engine = create_engine(generate_mysql_uri())
     _sessionmaker = sessionmaker(bind=engine)
+    logger = logging.getLogger("nfc-sensor")
 
     while True:
 
+        logger.info("Waiting for NFC Tag...")
         key = read_nfc_data()
+        logger.info("NFC Tag detected")
+
         _hash = load_config()["nfc_hash"]
 
         if verify_password(key, _hash):
+            logger.info("Authentication successful")
             session = _sessionmaker()
             user_authorized = get_boolean_state("user_authorized", session)
 
@@ -103,8 +109,10 @@ def nfc_check_loop():
             session.commit()
 
             if user_authorized.value:
+                logger.debug("User returned home")
                 queue_speaker_event(session, "Welcome Home!")
             else:
+                logger.debug("User leaving")
                 going_out = get_boolean_state("going_out", session)
                 door_opened = get_boolean_state("door_opened", session)
 
@@ -116,6 +124,8 @@ def nfc_check_loop():
                 going_out.value = False
                 door_opened.value = False
                 session.commit()
+        else:
+            logger.info("Authentication unsuccessful")
 
         time.sleep(3)
 
