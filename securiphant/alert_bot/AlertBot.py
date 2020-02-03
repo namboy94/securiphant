@@ -126,7 +126,7 @@ class AlertBot(Bot):
                     if self.hue_bridge is not None:
                         for light in self.hue_bridge.lights:
                             light.on = True
-                            light.xy = 0, 0
+                            light.xy = 0.214, 0.709
 
                 elif waiting_for_authorization:  # Break-in confirmed
                     self.logger.warning("Break-In was detected")
@@ -151,7 +151,7 @@ class AlertBot(Bot):
                     if self.hue_bridge is not None:
                         for light in self.hue_bridge.lights:
                             light.on = True
-                            light.xy = 1, 1
+                            light.xy = 0.6822, 0.3045
 
                     self.logger.debug("Recording video of would-be burglar")
                     recorded_videos = record_videos(tempfile_base, 10)
