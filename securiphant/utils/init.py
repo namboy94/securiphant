@@ -65,6 +65,7 @@ def initialize(configurations: List[str]):
         config["cameras"] = prompt_comma_list(
             "Connected Camera IDs: ", min_count=1, primitive_type=int
         )
+        config["hue_bridge_ip"] = prompt("Hue Bridge IP Address")
         print("Alert Bot Configuration:")
         AlertBot.create_config(TelegramBotConnection, config_dir)
         config.update(load_config())  # Need to get values stored by bot

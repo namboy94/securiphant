@@ -49,7 +49,8 @@ setup(
         "bokkichat",
         "bcrypt",
         "Adafruit_DHT",
-        "puffotter"
+        "puffotter",
+        "phue"
     ],
     extras_require={
         "display": ["PyQt5"],

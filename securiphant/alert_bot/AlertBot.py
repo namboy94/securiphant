@@ -18,6 +18,7 @@ along with securiphant.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE"""
 
 import time
+from phue import Bridge, PhueRegistrationException
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Type
 from sqlalchemy.orm import Session
@@ -61,8 +62,10 @@ class AlertBot(Bot):
         """
         super().__init__(connection, location, generate_mysql_uri())
 
+        config = load_config()
+
         self.logger.debug("Looking for owner address")
-        owner_address = load_config()["alert_bot_user_address"]
+        owner_address = config["alert_bot_user_address"]
         if owner_address is None:
             self.logger.debug("Owner address not found!")
             self.owner_address = None
@@ -71,6 +74,12 @@ class AlertBot(Bot):
             self.owner_address = Address(id=-1, address=owner_address)
 
         self.false_alarm = False
+
+        try:
+            self.hue_bridge = Bridge(config["hue_bridge_ip"])
+        except PhueRegistrationException:
+            self.logger.error("Hue Bridge not registered")
+            self.hue_bridge = None
 
     def run_in_bg(self):
         """
@@ -96,6 +105,12 @@ class AlertBot(Bot):
 
             if going_out.value:
                 self.logger.debug("User is going out right now")
+
+                self.logger.debug("Turning off the lights")
+                if self.hue_bridge is not None:
+                    for light in self.hue_bridge.lights:
+                        light.on = False
+
                 self.sessionmaker.remove()
                 continue
 
@@ -106,6 +121,12 @@ class AlertBot(Bot):
                     door_opened.value = False
                     db_session.commit()
                     waiting_for_authorization = False
+
+                    self.logger.debug("Setting lights to green")
+                    if self.hue_bridge is not None:
+                        for light in self.hue_bridge.lights:
+                            light.on = True
+                            light.xy = 0, 0
 
                 elif waiting_for_authorization:  # Break-in confirmed
                     self.logger.warning("Break-In was detected")
@@ -125,6 +146,12 @@ class AlertBot(Bot):
                                         "not authorized yet.")
                     waiting_for_authorization = True
                     self.send_txt(self.owner_address, "Door has been opened")
+
+                    self.logger.debug("Setting lights to red")
+                    if self.hue_bridge is not None:
+                        for light in self.hue_bridge.lights:
+                            light.on = True
+                            light.xy = 1, 1
 
                     self.logger.debug("Recording video of would-be burglar")
                     recorded_videos = record_videos(tempfile_base, 10)
