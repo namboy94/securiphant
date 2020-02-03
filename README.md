@@ -168,6 +168,10 @@ or the corresponding systemd service.
 
 To stop any running services, run ```securiphant stop```.
 
+CAUTION: On newer versions of systemd, it might be necessary to
+set ```KillUserProcesses=no``` in your ```/etc/systemd/logind.conf```
+to avoid the systemd services being killed after the user logs out.
+
 ## Further Information
 
 * [Changelog](CHANGELOG)
