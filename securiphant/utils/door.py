@@ -24,6 +24,7 @@ from threading import Lock
 from securiphant.db import generate_mysql_uri
 from securiphant.utils.db import get_boolean_state
 from securiphant.db.events.DoorOpenEvent import DoorOpenEvent
+from securiphant.db.states.CheckIn import CheckIn
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -94,6 +95,16 @@ def door_check_loop():
                 ))
                 open_start = None
                 logger.info("Door was closed")
+
+        checkin = \
+            session.query(CheckIn).filter_by(service="door-sensor").first()
+        if checkin is None:
+            checkin = CheckIn(
+                service="door-sensor", last_ping=int(time.time())
+            )
+            session.add(checkin)
+        else:
+            checkin.last_ping = int(time.time())
 
         session.commit()
         time.sleep(0.3)
